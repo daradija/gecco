@@ -36,7 +36,7 @@ Dado un brazo robótico, del que se desconocen las dimensiones y posición inici
 Por fines ilustrativo se presenta el problema en 2D, siendo similar su resolución en 3D.
 
 
-0![](assets/17354711208811.jpg)
+![](assets/17354711208811.jpg)
 
 
 
@@ -159,6 +159,22 @@ En estos casos podemos:
 4. Inferir que B genera mayores correcciones, por lo tanto predice peor y producir menos bifurcaciones en B.
 
 Respectivamente mitosis de variable, dependencia de variable, lógica y desarrollo explicativo (vs EMC clásico).
+
+# Apilamiento
+Lo mismo que existe la recursividad, en esta arquitectura se puede dar la recursividad estructural.
+Es decir, se puede aprender como aprender, con la ventaja de no tener que desarrollar nueva programación. 
+Obviamente no se puede responder una pregunta haciendo dos preguntas. 
+Pero en mi investigación descubrí que podemos responder a dos preguntas al mismo tiempo, con una misma investigación.
+Esta idea es similar a lo que realiza el aprendizaje profundo en las primeras etapas, un parámetro será utilizado por varias unidades. 
+
+# Implementación
+kinematics
+	autodiff
+	robot
+
+dinamic-prunning 2 
+	cuda
+	autoboot
 
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.
