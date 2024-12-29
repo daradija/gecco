@@ -154,8 +154,11 @@ Pero también podemos: si una variable X es compartida entre A y B podemos entre
 En estos casos podemos:
 
 1. Dividir X, de tal forma que evolucionene independientemente en un Xa o Xb.
-2. Realizar un aprendizaje, tejido conectivo/ingeligente entre una alternativa y una variable.
-3. Inferir que B genera mayores correcciones, por lo tanto predice peor y producir menos bifurcaciones en B.
+2. En consecuencia, deducir de quien depende la corrección de X, si es del gen (A/B) o de otro. 
+3. Realizar un aprendizaje, tejido conectivo/ingeligente entre una alternativa y una variable.
+4. Inferir que B genera mayores correcciones, por lo tanto predice peor y producir menos bifurcaciones en B.
+
+Respectivamente mitosis de variable, dependencia de variable, lógica y desarrollo explicativo (vs EMC clásico).
 
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.
