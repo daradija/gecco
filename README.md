@@ -168,13 +168,7 @@ Pero en mi investigación descubrí que podemos responder a dos preguntas al mis
 Esta idea es similar a lo que realiza el aprendizaje profundo en las primeras etapas, un parámetro será utilizado por varias unidades. 
 
 # Implementación
-kinematics
-	autodiff
-	robot
-
-dinamic-prunning 2 
-	cuda
-	autoboot
+[[drnumba.md]]
 
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.
