@@ -70,20 +70,92 @@ v1 y v2 son variables de entrada, v3 es el resultado. El algoritmo comienza asig
 
 Se detallan solo los cambios que se realizarían en el algoritmo anterior. El algoritmo es prácticamente el mismo salvo que los gradientes son multiplicados con el valor de la otra rama.
 
-# Programación Lógica
+# Extensión Algorítmica
 Los modelos Hamiltonian Monte Carlos (HMC) son una forma de explorar en una serie temporal el espacio de exploración de una forma no aleatoria (MCMC).
 Para ello se modelan las variables del sistema como variables aleatorias que siguen una determinada distribución estadística. 
 
 Es decir, se estudia como:
 
--> X
+-> X -> Y
 
 Si incluimos la función o programa F. En vez de presuponer una variable aleatoria podemos suponer un programa aleatorio.
 
--> F -> X
+-> F -> Y
 
 ¿Qué es un programa aleatorio?
+![](assets/17354722458633.jpg)
 
+Lo mismo que una variable aleatoria, con ruido, puede generar una salida con su PDF el objetivo en la extensión algorítmica es generar un espacio de funciones que generan salidas con PDFs.
+
+
+Para ello introducimos varias ideas.
+
+1. Lenguaje de primer orden.
+2. GPU metainterprete.
+3. ADN.
+4. Autodiferenciación.
+
+Este modelo es una extensión del otro, ya que lo puede contener variables, pero las analizaremos a posteriori, para centrarnos inicialmente en F que es quizá la característica más relevante.
+
+Vamos a comenzar definiendo un lenguaje preposicional muy restringido como espacio de funciones F.
+
+F:-A.
+F:-B.
+
+Suponga que son cláusulas de horm.
+
+Suponga que F se ejecuta en un entorno altamente paralelizable, una GPU con 20000 núcleos cuda.
+En cada núcleo cuda se ejecuta una versión del programa.
+Al ejecutar F, como hay dos alternativas de programa, A y B supongamos que la mitad de los núcleos instnacian A (10k) y la otra mitad B(10k).
+
+Se puede implementar en cuda un metaintérprete. Cada población/núcleo tiene su propio ADN.
+La instancia de cuda, al llegar a F, mira su ADN, descubre que no está definida esa opción y se instancia, cada instancia tiene un número, si hay dos instancias, para producir un reparto uniforme basta emplear i%2, siendo i su número de instancia cuda y 2 el número de opciones (A,B) que existen. 
+Obviamente tenemos otro elemento que codifica el programa de prolog en memoria de GPU.
+
+En el caso de encontrarse una variable se procede de manera análoga.
+
+F:-float(0,1) x
+
+Se procede de manera análoga, se instancia la variable con un valor comprendido entre 0 y 1 y continua la ejecución.
+
+## ¿Donde se ejecutan las cosas?
+Tradicionalmente la CPU dirige a la GPU.
+La idea es que A contenga micro instrucciones, de tipo RISC haciendo las operaciones op v1, v2, v3 que describimos previamente. 
+Estas instrucciones están pensadas para ejecutarse en CPU y mediante autodiferenciación se repliquen para toda la población.
+
+En nuestro modelo vamos a hacer que la GPU mande a la CPU que ejecute A. Para ello imaginemos una lista de A, en el que hay un índice a ADNs. Cuando una instancia desea ejecutarse se introduce en la lista. 
+La CPU cuando tiene suficientes instancias lanza una ejecución en paralelo de las mismas. 
+La CPU lanza las microinstrucciones.
+
+# La paradoja prolog/modo forward.
+Si bien es conocido que la backpropagation es mas eficiente cuando hay muchos parámetros y pocas salidas. Y el método forward es más eficiente a la inversa, cuando hay pocas variables y muchas salidas.
+
+Si hacemos una ejecución bajo demanda, para solucionar F, busca A o B. Estamos escribiendo la función de abajo a arriba, estamos ejecutnado las cosas al inverso de como se ejecutan los programas.
+
+Podemos tener la ventaja de los dos mundos, el de explorar distintos mundos, como hace prolog, y el de la backpropagation, podemos derivar desde la salida a los parámetros. 
+
+En conclusión, 
+1. podemos operar en modo forward y tener las ventajas de backpropagation.
+2. podemos combinar imperativo y lógico.
+3. podemos paralelizar las poblaciones por alternativas o variables.
+
+Una vez completada las ejecuciones a traves de los gradientes podemos hacer ajustes.
+En las alternativas se introducen pseudo gradientes, que facilitan dicha operación.
+
+# ¿Qué es un pseudogradiente?
+Es un falso gradiente que se añade, cuando es A se pone a 1 en A, cuando es B se pone a 1 en B.
+Este gradiente se hereda, por dinamic prunning, solo los mas significativos son arrastrados.
+Al final se tiene la correción de las variables y su influencia, qué algoritmos han intervenidos.
+
+Usualmente agrupando varias ejecuciones podemos hacer un batch que corrija. Sumamos sus gradientes (obvio L, la función de pérdida).
+
+Pero también podemos: si una variable X es compartida entre A y B podemos entre otras cosas hacer un batch de corrección condicional. Si A=1 la corrección es delta X.
+
+En estos casos podemos:
+
+1. Dividir X, de tal forma que evolucionene independientemente en un Xa o Xb.
+2. Realizar un aprendizaje, tejido conectivo/ingeligente entre una alternativa y una variable.
+3. Inferir que B genera mayores correcciones, por lo tanto predice peor y producir menos bifurcaciones en B.
 
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.
