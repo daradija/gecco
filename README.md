@@ -1,15 +1,18 @@
 # Calibración Dinámica Robot a partir de Cámaras
 # Abstract
-Se presenta una técnica novedosa que combina algoritmos genéticos y redes neuronales y es especialmente útil para la definición de modelos. En concreto para el ajuste de los parámetros de un modelo.
-La novedad consiste en que los parámetros son ajustados tanto por la red neuronal como por el operador de cruce genético.
-Se aplica a un problema robótico, la cinemática inversa, en concreto se usa un modelo físico para ajustar el movimiento y la técnica descrita para hallar los parámetros del modelo. Es una aportación que permite calibrar los parámetros de la cinemática a partir de una cámara.
-Se realiza una implementación en CUDA.
-La técnica es ideal para modelizar.
-Este trabajo combina autodiferenciación, matrices de transformación afines, el modo forward, una técnica que combina algoritmos genéticos con descenso de gradiente para hallar los parámetros de la cinemática inversa de un brázo robótico mediante el ajuste de una cámara en un entorno simulado.
-La población se utiliza para probar distintas semillas para los parámetros iniciales. El descenso de gradiente se emplea para el ajuste de los pesos, como si de una red neuronal se tratase. 
-Se realiza una implementación usando GPU y proporciona una librería. La autodiferenciación facilita el definir distintos modelos físcos.
-Esperamos que el modelado de problemas físicos y su calibración sea mas sencillo su diseño.
-Estado del Arte
+**Title:** Novel Technique for Model Calibration Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion
+
+**Abstract:**
+
+This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic crossover operator. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
+
+A CUDA implementation is provided, making it an ideal solution for modeling complex systems. The technique leverages self-differentiation, affine transformation matrices, forward mode, and a hybrid approach that combines genetic algorithms with gradient descent to estimate the kinematic inverse of a robotic arm through camera adjustment in a simulated environment.
+
+The population is utilized to test various initial parameter seeds, while the gradient descent is employed for weight optimization, akin to neural network training. A GPU implementation is provided, along with a library that facilitates defining diverse physical models. This technique aims to simplify the modeling and calibration of physical problems.
+
+**Keywords:** Genetic Algorithms, Neural Networks, Kinematics Inversion, Model Calibration, Robot Arm Simulation
+
+# Estado del Arte
 La neuroevolución combina redes
 neuronales con algoritmos genéticos.
 Aunque habitualmente el algoritmo genético se utiliza para optimizar la arquitectura de la red neuronal, capas, número de neuronas.
@@ -40,9 +43,11 @@ Por fines ilustrativo se presenta el problema en 2D, siendo similar su resoluci�
 
 
 
+
 ## Introducción a la herramienta de deducción
 
 ![](assets/17354711579929.jpg)
+
 
 
 
@@ -92,9 +97,10 @@ Se utiliza una filosofía RIS, todas las operaciones son con registros. Luego si
 
 ```
 
-v1 y v2 son variables de entrada, v3 es el resultado. El algoritmo comienza asignando todos los gradientes de v2 a v3. Se trata de quedarse con los mayores gradientes mas significativos. La suma es una adición de gradientes. Hay que asegurarse que el gradiente no está, en la misma pasada podemos detectar también el mínimo. Si no se encuentra y el nuevo gradiente es suficientemente significativo se asigna. Ser suficientemente significativo significa ser mayor en términos absolutos.
+src1 y src2 son variables de entrada, dest es el resultado. El algoritmo comienza asignando todos los gradientes de src1 a dest. Se trata de quedarse con los mayores gradientes mas significativos. La suma es una adición de gradientes. Hay que asegurarse que el gradiente no está, en la misma pasada podemos detectar también el mínimo. Si no se encuentra y el nuevo gradiente es suficientemente significativo se asigna. Ser suficientemente significativo significa ser mayor en términos absolutos.
 
 ![](assets/17354712170065.jpg)
+
 
 
 
@@ -115,6 +121,7 @@ Si incluimos la función o programa F. En vez de presuponer una variable aleator
 
 ¿Qué es un programa aleatorio?
 ![](assets/17354722458633.jpg)
+
 
 Lo mismo que una variable aleatoria, con ruido, puede generar una salida con su PDF el objetivo en la extensión algorítmica es generar un espacio de funciones que generan salidas con PDFs.
 
@@ -209,3 +216,9 @@ Y aunque haya un a gpu de por medio, es cierto que el deploy, poner la versión 
 
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.
+
+
+
+
+
+

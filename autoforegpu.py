@@ -55,6 +55,37 @@ class AutoFore:
 		self.dr.data("src1",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
 		self.dr.data("src2",param=["add","sub","mul","div","pow"])
 		self.dr.function("add","poblacion")
+		self.dr.function("mul","poblacion")
+
+	def mul(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return
+		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
+		for i in range(self.g.shape[2]):
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
+			if self.id[self.src2, idx, i]!=-1:
+				break
+		for i in range(self.g.shape[2]):
+			i=-1
+			min=0
+			id1=self.id[self.src1, idx, i]
+			for j in range(self.g.shape[2]):
+				id2=self.id[self.src2, idx, j]
+				if id2==-1:
+					break
+				if id2==id1:
+					i=-1
+					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					break
+				g2=np.abs(self.g[self.src2, idx, i])
+				if min<g2:
+					min=g2
+					i=id2
+			if i!=-1:
+				self.g[self.dest, idx, i] = min
+				self.id[self.dest, idx, i] = i
 
 
 	def add(self):
