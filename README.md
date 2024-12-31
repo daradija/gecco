@@ -57,9 +57,40 @@ Se puede usar en cpu una cuenta de referencias o una utilización circular.
 En la referencia se guarda el número de operación y se borraría lo que se referenció en la última operación. El uso circular se quitaría este chequeo.
 Se utiliza una filosofía RIS, todas las operaciones son con registros. Luego si tenemos que multiplicar por una constante esta sería cargada en un registro.
 
-![](assets/17354711987284.jpg)
 
+```python
 
+	def add(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return
+		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
+		for i in range(self.g.shape[2]):
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
+			if self.id[self.src2, idx, i]!=-1:
+				break
+		for i in range(self.g.shape[2]):
+			i=-1
+			min=0
+			id1=self.id[self.src1, idx, i]
+			for j in range(self.g.shape[2]):
+				id2=self.id[self.src2, idx, j]
+				if id2==-1:
+					break
+				if id2==id1:
+					i=-1
+					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					break
+				g2=np.abs(self.g[self.src2, idx, i])
+				if min<g2:
+					min=g2
+					i=id2
+			if i!=-1:
+				self.g[self.dest, idx, i] = min
+				self.id[self.dest, idx, i] = i
+
+```
 
 v1 y v2 son variables de entrada, v3 es el resultado. El algoritmo comienza asignando todos los gradientes de v2 a v3. Se trata de quedarse con los mayores gradientes mas significativos. La suma es una adición de gradientes. Hay que asegurarse que el gradiente no está, en la misma pasada podemos detectar también el mínimo. Si no se encuentra y el nuevo gradiente es suficientemente significativo se asigna. Ser suficientemente significativo significa ser mayor en términos absolutos.
 

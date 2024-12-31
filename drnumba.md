@@ -35,6 +35,7 @@ from drnumba import *
 
 # Recuerda inclur numpy
 import numpy as np
+# Recuerda incluir este import en el 'kernel.py' o el que elijas si usas alguna función de np dentro de un kernel. 
 
 # instancia una variable a nivel global
 drnumba=DrNumba("kernel.py") 

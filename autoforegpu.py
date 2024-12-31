@@ -51,9 +51,9 @@ class AutoFore:
 
 		self.dr.function("differentiable","poblacion")
 
-		self.dr.data("r1",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
-		self.dr.data("r2",param=["add","sub","mul","div","pow"])
-		self.dr.data("r3",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.data("dest",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.data("src1",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.data("src2",param=["add","sub","mul","div","pow"])
 		self.dr.function("add","poblacion")
 
 
@@ -61,6 +61,31 @@ class AutoFore:
 		idx=cuda.grid(1)
 		if idx>=self.value.shape[1]:
 			return
+		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
+		for i in range(self.g.shape[2]):
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
+			if self.id[self.src2, idx, i]!=-1:
+				break
+		for i in range(self.g.shape[2]):
+			i=-1
+			min=0
+			id1=self.id[self.src1, idx, i]
+			for j in range(self.g.shape[2]):
+				id2=self.id[self.src2, idx, j]
+				if id2==-1:
+					break
+				if id2==id1:
+					i=-1
+					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					break
+				g2=np.abs(self.g[self.src2, idx, i])
+				if min<g2:
+					min=g2
+					i=id2
+			if i!=-1:
+				self.g[self.dest, idx, i] = min
+				self.id[self.dest, idx, i] = i
 
 	def differentiable(self):
 		idx=cuda.grid(1)
@@ -219,11 +244,12 @@ class Variable:
 	def __add__(self, other):
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
-			#v.value=self.value+other
-			v.assign(other)
+			aux=self.nn.midVar()
+			aux.assign(other)
+			other=aux
 		# else:
 		# 	v.value=self.value+other.value
-		self.nn.add(self.id2,other.id2,v.id2)
+		self.nn.add(v.id2,self.id2,other.id2,cpu=True)
 
 		# for child in (self, other):
 		# 	if isinstance(child, Variable):
