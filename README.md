@@ -170,5 +170,11 @@ Esta idea es similar a lo que realiza el aprendizaje profundo en las primeras et
 # Implementación
 [Doctor Numba](drnumba.md)
 
+# Conclusiones
+Como se ve el número de variables y pesos es muy reducido pero se consiguen logros que el aprendizaje profundo no conseguiría.
+
+Y aunque haya un a gpu de por medio, es cierto que el deploy, poner la versión entrenada en producción, es más sencilla ya que requiere menos hardware. Es mas barato ejecutar un modelo parametrizado que la inferencia de una red neuronal.
+
+
 # Bibliografía
 Industrial Robotic: Programming, Simulation and Applications, disponible via Fama us, en el capítulo 14 página 280 incluye una descripción de la lente, 273 para conceptos previos.

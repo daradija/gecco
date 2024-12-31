@@ -4,19 +4,81 @@
 # Es una copia de dinamic_prunning_in_forward_mode2
 
 import random,math,time
+from drnumba import*
+import numpy as np
 
+drnumba=DrNumba("kernelAutofore.py")
 class AutoFore:
 	def __init__(self,gaf=None,pruning=0):
-		self.var2id={}
-		self.id2var={}
-		self.nominative=[]
-		self.gaf=gaf
-		self.pruning=pruning
+		# self.var2id={}
+		# self.id2var={}
+		# self.nominative=[]
+		# self.gaf=gaf
+		# self.pruning=pruning
 
 
-		self.operador=-1
-		self.operacion=0
+
+		self.dr=drnumba.dr(self)
+		self.variables=1000 # en función de la memoria
+		self.poblacion=4608 # en función de la gpu
+		self.gradientes=32 # número de variables, las menos significativas seran eliminadas
+
+		self.nextVar=0 # Siguiente variable a usar
+
+		self.operacion=0 # Lleva la cuenta de las operaciones realizadas
+		self.referencia=np.zeros(self.variables,dtype=np.int16) # marca los datos usados en cada operación, para su reuso
+		self.peso=np.zeros(self.variables,dtype=np.int8) # incica si la variable es un peso del sistema
 		
+		# self.operador=-1 # Código donde se programa la operación a realizar
+		# self.r1=-1
+		# self.r2=-1
+		# self.r3=-1
+
+		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float16)
+		self.dr.data("variables","poblacion","value")
+		self.delta=np.zeros((self.variables,self.poblacion),dtype=np.float16)
+		self.dr.data("variables","poblacion","delta")
+		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float16)
+		self.dr.data("variables","poblacion","gradientes","g")
+		self.id=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.int16) # posición que ocupa la variable
+		self.dr.data("variables","poblacion","gradientes","id")
+
+		#self.id_var=np.int16(0)
+		self.dr.data("id_var",param=["assign","differentiable"])
+		#self.v=np.float16(0)
+		self.dr.data("v",param=["assign"])
+		self.dr.function("assign","poblacion")
+
+		self.dr.function("differentiable","poblacion")
+
+		self.dr.data("r1",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.data("r2",param=["add","sub","mul","div","pow"])
+		self.dr.data("r3",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.function("add","poblacion")
+
+
+	def add(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return
+
+	def differentiable(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return
+		self.g[self.id_var, idx, 0] = 1
+		self.id[self.id_var, idx, 0] = self.id_var
+		self.delta[self.id_var, idx] = 0
+
+	def assign(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return		
+		self.value[self.id_var, idx] = self.v
+		for i in range(self.g.shape[2]):
+			self.g[self.id_var, idx, i] = 0
+			self.id[self.id_var, idx,i] = -1
+
 
 	def vector(self,x,y):
 		if isinstance(x,Variable):
@@ -58,20 +120,19 @@ class AutoFore:
 
 	def val(self,value):
 		v=Variable(self)
-		v.value=value
-		v.forward=[]
+		v.assign(value)
 		return v
 	
 	def var(self):
 		v=Variable(self)
-		v.forward=[]
+		v.assign(0)
 		return v
 	
 	def param(self,valueFrom, valueTo):
 		v=self.val(random.uniform(valueFrom,valueTo))
 		v.valueFrom=valueFrom
 		v.valueTo=valueTo
-		return v.derivable()
+		return v.differentiable()
 	
 	def control(self,valueFrom, valueTo):
 		v=self.val(random.uniform(valueFrom,valueTo))
@@ -81,13 +142,27 @@ class AutoFore:
 
 	def midVar(self):
 		v=Variable(self)
-		v.forward=[0]*len(self.var2id)
+		#v.forward=[0]*len(self.var2id)
 		return v
 	
+
+
+# @cuda.jit
+# def af_assing(matrix, row_idx, new_row, g, id):
+# 	col = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
+# 	if col < matrix.shape[1]:
+# 		matrix[row_idx, col] = new_row[col]
+# 		for i in range(g.shape[2]):
+# 			g[row_idx, col, i] = 0
+# 			id[row_idx, col] = -1
+
+
+
 class Variable:
 	def __init__(self, nn):
 		self.nn=nn
-		self.value = 0
+		self.id2=nn.nextVar
+		nn.nextVar+=1
 
 	def pruning(self):
 		if self.nn.pruning==0:
@@ -111,6 +186,10 @@ class Variable:
 		v.forward=list(self.forward)
 		return v
 
+	def assign(self,v):
+
+		self.nn.assign(self.id2,v)
+
 	def set(self,v):
 		if self.valueFrom<=v.value and v.value<=self.valueTo:
 			self.value=v.value
@@ -127,26 +206,29 @@ class Variable:
 		id=self.nn.var2id[v]
 		return self.forward[id]
 
-	def derivable(self):
-		self.id=len(self.nn.var2id)
-		self.nn.var2id[self]=self.id
-		self.nn.id2var[self.id]=self
-		self.forward=[0]*len(self.nn.var2id)
-		self.forward[self.id]=1
-		self.delta=0
+	def differentiable(self):
+		self.nn.differentiable(self.id2)
+		# self.id=len(self.nn.var2id)
+		# self.nn.var2id[self]=self.id
+		# self.nn.id2var[self.id]=self
+		# self.forward=[0]*len(self.nn.var2id)
+		# self.forward[self.id]=1
+		# self.delta=0
 		return self
 		
 	def __add__(self, other):
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
-			v.value=self.value+other
-		else:
-			v.value=self.value+other.value
+			#v.value=self.value+other
+			v.assign(other)
+		# else:
+		# 	v.value=self.value+other.value
+		self.nn.add(self.id2,other.id2,v.id2)
 
-		for child in (self, other):
-			if isinstance(child, Variable):
-				for name,value in enumerate(child.forward):
-					v.forward[name]+=value
+		# for child in (self, other):
+		# 	if isinstance(child, Variable):
+		# 		for name,value in enumerate(child.forward):
+		# 			v.forward[name]+=value
 		return v
 
 	def __radd__(self, other):
@@ -287,7 +369,7 @@ def ejemplo_red_neuronal_polinomios():
 
 	C=[[Ct[j][i] for j in range(y)] for i in range(z)]
 
-	B=[[nn.val(random.random()).derivable() for j in range(y)] for i in range(x)]
+	B=[[nn.val(random.random()).differentiable() for j in range(y)] for i in range(x)]
 	
 	totalPendientes=y
 	completado=[False]*y
@@ -349,7 +431,7 @@ def ejemplo_simple():
 	a=nn.val(2)
 	b=nn.val(1)
 	
-	b.derivable()
+	b.differentiable()
 
 	c=a+b
 	d=b+1
@@ -361,7 +443,7 @@ def ejemplo_simple():
 
 if __name__ == '__main__':
 	start=time.time()
-	ejemplo_red_neuronal_polinomios()
-	#ejemplo_simple()
-
+	ejemplo_simple()
+	#ejemplo_red_neuronal_polinomios()
+	
 	print("Tiempo de ejecución: ",time.time()-start)

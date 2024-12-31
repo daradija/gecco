@@ -468,6 +468,11 @@ class DrNumba:
 		obj.dr=dr2
 		return dr2
 
+simple_types = (int, float, str, bool, type(None))
+
+def is_simple(var):
+    return isinstance(var, simple_types)
+
 class DrNumba2:
 	def __init__(self,gestor, obj):
 		self.gestor=gestor
@@ -598,7 +603,11 @@ class DrNumba2:
 			iparam=0
 			for d in data2:
 				if d.param and name in d.param:
-					d2=cuda.to_device(args[iparam])
+					aux=args[iparam]
+					if is_simple(aux):
+						d2=aux
+					else:
+						d2=cuda.to_device(args[iparam])
 					args2.append(d2)
 				else:
 					# Se supone transferido a cuda.
