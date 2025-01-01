@@ -63,29 +63,32 @@ class AutoFore:
 			return
 		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
 		for i in range(self.g.shape[2]):
-			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] * self.value[self.src2,idx]
 			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
 			if self.id[self.src2, idx, i]!=-1:
 				break
-		for i in range(self.g.shape[2]):
-			i=-1
-			min=0
-			id1=self.id[self.src1, idx, i]
-			for j in range(self.g.shape[2]):
-				id2=self.id[self.src2, idx, j]
-				if id2==-1:
-					break
-				if id2==id1:
+		for k in range(self.g.shape[2]):
+			id2=self.id[self.src2, idx, k]
+			if id2==-1:
+				break
+			i=self.id[self.dest, idx, 0]
+			min=self.g[self.dest, idx, 0] 
+			g2=self.g[self.src2,idx,k] #
+           
+			for j in range(1,self.g.shape[2]):
+				idd=self.id[self.dest, idx, j]
+				if id2==idd:
 					i=-1
-					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					self.g[self.dest, idx, i] +=  g2
 					break
-				g2=np.abs(self.g[self.src2, idx, i])
-				if min<g2:
-					min=g2
-					i=id2
-			if i!=-1:
-				self.g[self.dest, idx, i] = min
-				self.id[self.dest, idx, i] = i
+				gd=self.g[self.dest, idx, i] * self.value[self.src1,idx]
+				if np.abs(min)>np.abs(gd):
+					min=gd
+					i=idd
+			if i!=-1 and self.g[self.dest, idx, i] > g2:
+				self.g[self.dest, idx, i] = g2
+				self.id[self.dest, idx, i] = id2
+
 
 
 	def add(self):
@@ -94,29 +97,31 @@ class AutoFore:
 			return
 		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
 		for i in range(self.g.shape[2]):
-			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] #
 			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
 			if self.id[self.src2, idx, i]!=-1:
 				break
-		for i in range(self.g.shape[2]):
-			i=-1
-			min=0
-			id1=self.id[self.src1, idx, i]
-			for j in range(self.g.shape[2]):
-				id2=self.id[self.src2, idx, j]
-				if id2==-1:
-					break
-				if id2==id1:
+		for k in range(self.g.shape[2]):
+			id2=self.id[self.src2, idx, k]
+			if id2==-1:
+				break
+			i=self.id[self.dest, idx, 0]
+			min=self.g[self.dest, idx, 0] 
+			g2=self.g[self.src2,idx,k] #
+           
+			for j in range(1,self.g.shape[2]):
+				idd=self.id[self.dest, idx, j]
+				if id2==idd:
 					i=-1
-					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					self.g[self.dest, idx, i] +=  g2
 					break
-				g2=np.abs(self.g[self.src2, idx, i])
-				if min<g2:
-					min=g2
-					i=id2
-			if i!=-1:
-				self.g[self.dest, idx, i] = min
-				self.id[self.dest, idx, i] = i
+				gd=self.g[self.dest, idx, i] #
+				if np.abs(min)>np.abs(gd):
+					min=gd
+					i=idd
+			if i!=-1 and self.g[self.dest, idx, i] > g2:
+				self.g[self.dest, idx, i] = g2
+				self.id[self.dest, idx, i] = id2
 
 	def differentiable(self):
 		idx=cuda.grid(1)

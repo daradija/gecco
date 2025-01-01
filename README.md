@@ -1,10 +1,6 @@
-# Calibración Dinámica Robot a partir de Cámaras
+# Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
 # Abstract
-**Title:** Novel Technique for Model Calibration Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion
-
-**Abstract:**
-
-This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic crossover operator. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
+This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic selecction. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
 
 A CUDA implementation is provided, making it an ideal solution for modeling complex systems. The technique leverages self-differentiation, affine transformation matrices, forward mode, and a hybrid approach that combines genetic algorithms with gradient descent to estimate the kinematic inverse of a robotic arm through camera adjustment in a simulated environment.
 
@@ -43,6 +39,13 @@ Por fines ilustrativo se presenta el problema en 2D, siendo similar su resoluci�
 
 
 
+![](assets/17356959871554.jpg)
+![](assets/17356960716475.jpg)
+
+
+![](assets/17356960357187.jpg)
+
+Las matrices de rotación, translación y perspectiva.
 
 ## Introducción a la herramienta de deducción
 
@@ -71,29 +74,32 @@ Se utiliza una filosofía RIS, todas las operaciones son con registros. Luego si
 			return
 		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
 		for i in range(self.g.shape[2]):
-			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] 
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] #
 			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
 			if self.id[self.src2, idx, i]!=-1:
 				break
-		for i in range(self.g.shape[2]):
-			i=-1
-			min=0
-			id1=self.id[self.src1, idx, i]
-			for j in range(self.g.shape[2]):
-				id2=self.id[self.src2, idx, j]
-				if id2==-1:
-					break
-				if id2==id1:
+		for k in range(self.g.shape[2]):
+			id2=self.id[self.src2, idx, k]
+			if id2==-1:
+				break
+			i=self.id[self.dest, idx, 0]
+			min=self.g[self.dest, idx, 0] 
+			g2=self.g[self.src2,idx,k] #
+           
+			for j in range(1,self.g.shape[2]):
+				idd=self.id[self.dest, idx, j]
+				if id2==idd:
 					i=-1
-					self.g[self.dest, idx, i] +=  self.g[self.src2, idx, i]
+					self.g[self.dest, idx, i] +=  g2
 					break
-				g2=np.abs(self.g[self.src2, idx, i])
-				if min<g2:
-					min=g2
-					i=id2
-			if i!=-1:
-				self.g[self.dest, idx, i] = min
-				self.id[self.dest, idx, i] = i
+				gd=self.g[self.dest, idx, i] #
+				if np.abs(min)>np.abs(gd):
+					min=gd
+					i=idd
+			if i!=-1 and self.g[self.dest, idx, i] > g2:
+				self.g[self.dest, idx, i] = g2
+				self.id[self.dest, idx, i] = id2
+
 
 ```
 
