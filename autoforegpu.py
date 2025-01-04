@@ -6,6 +6,9 @@
 import random,math,time
 from drnumba import*
 import numpy as np
+from autofore import ejemplo_red_neuronal_polinomios
+
+cpu=False
 
 drnumba=DrNumba("kernelAutofore.py")
 class AutoFore:
@@ -19,14 +22,15 @@ class AutoFore:
 
 
 		self.dr=drnumba.dr(self)
-		self.variables=1000 # en función de la memoria
-		self.poblacion=4608 # en función de la gpu
-		self.gradientes=32 # número de variables, las menos significativas seran eliminadas
+		self.variables=10000 # en función de la memoria
+		self.poblacion=128 # en función de la gpu
+		self.gradientes=20 # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
 
 		self.operacion=0 # Lleva la cuenta de las operaciones realizadas
-		self.referencia=np.zeros(self.variables,dtype=np.int16) # marca los datos usados en cada operación, para su reuso
+		self.firma=np.zeros(self.variables) # firma para detectar fallo en el reuso de variables
+		self.referencia=np.zeros(self.variables) # marca los datos usados en cada operación, para su reuso
 		self.peso=np.zeros(self.variables,dtype=np.int8) # incica si la variable es un peso del sistema
 		
 		# self.operador=-1 # Código donde se programa la operación a realizar
@@ -34,58 +38,103 @@ class AutoFore:
 		# self.r2=-1
 		# self.r3=-1
 
-		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float16)
+		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float64)
 		self.dr.data("variables","poblacion","value")
-		self.delta=np.zeros((self.variables,self.poblacion),dtype=np.float16)
+		self.delta=np.zeros((self.variables,self.poblacion),dtype=np.float64)
 		self.dr.data("variables","poblacion","delta")
-		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float16)
+		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float64)
 		self.dr.data("variables","poblacion","gradientes","g")
 		self.id=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.int16) # posición que ocupa la variable
 		self.dr.data("variables","poblacion","gradientes","id")
 
 		#self.id_var=np.int16(0)
-		self.dr.data("id_var",param=["assign","differentiable"])
-		#self.v=np.float16(0)
+		self.dr.data("id_var",param=["assign","differentiable","assign2"])
+		#self.v=np.float64(0)
 		self.dr.data("v",param=["assign"])
+		self.dr.data("poblacion","v2",param=["assign2"])
 		self.dr.function("assign","poblacion")
+		self.dr.function("assign2","poblacion")
+		
 
 		self.dr.function("differentiable","poblacion")
 
-		self.dr.data("dest",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
+		self.dr.data("dest",param=["add","sub","mul","div","pow","sin","cos","sigmoid","error2Delta","applyDelta"])
 		self.dr.data("src1",param=["add","sub","mul","div","pow","sin","cos","sigmoid"])
 		self.dr.data("src2",param=["add","sub","mul","div","pow"])
+		self.dr.data("epsilon",param=["applyDelta"])
 		self.dr.function("add","poblacion")
 		self.dr.function("mul","poblacion")
+		self.dr.function("sub","poblacion")
+
+		self.dr.function("error2Delta","poblacion","gradientes")		
+		self.dr.function("applyDelta","poblacion","gradientes")
+
+	def assign2(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return		
+		self.value[self.id_var, idx] = self.v2[idx]
+		for i in range(self.g.shape[2]):
+			self.g[self.id_var, idx, i] = 0
+			self.id[self.id_var, idx,i] = -1
+
+	def applyDelta(self):
+		idx,idy=cuda.grid(2)
+		if idx>=self.value.shape[1] or idy>=self.g.shape[2]:
+			return
+		idaux=self.id[self.dest, idx, idy]
+		if idaux==-1:
+			return
+		self.value[idaux,idx] -= self.delta[idaux,idx] * self.epsilon
+		self.delta[idaux,idx] = 0
+
+	def error2Delta(self):
+		idx,idy=cuda.grid(2)
+		if idx>=self.value.shape[1] or idy>=self.g.shape[2]:
+			return
+		idaux=self.id[self.dest, idx, idy]
+		if idaux==-1:
+			return
+		self.delta[idaux, idx] += self.g[self.dest, idx, idy]
+		#cuda.atomic.add(self.delta[idaux],idx, self.g[self.dest, idx, idy])
+
 
 	def mul(self):
 		idx=cuda.grid(1)
 		if idx>=self.value.shape[1]:
 			return
-		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
+		self.value[self.dest, idx] = self.value[self.src1, idx] * self.value[self.src2, idx] #
 		for i in range(self.g.shape[2]):
-			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] * self.value[self.src2,idx]
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i]*self.value[self.src2, idx] #
 			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
-			if self.id[self.src2, idx, i]!=-1:
+			if self.id[self.src1, idx, i]==-1:
 				break
 		for k in range(self.g.shape[2]):
 			id2=self.id[self.src2, idx, k]
 			if id2==-1:
 				break
-			i=self.id[self.dest, idx, 0]
-			min=self.g[self.dest, idx, 0] 
-			g2=self.g[self.src2,idx,k] #
-           
-			for j in range(1,self.g.shape[2]):
+			i=-1
+			g2=self.g[self.src2,idx,k] * self.value[self.src1, idx] #
+			min=g2 
+			
+			for j in range(self.g.shape[2]):
 				idd=self.id[self.dest, idx, j]
+				if idd==-1:
+					i=j
+					if i+1<self.g.shape[2]:
+						self.id[self.dest, idx, i+1] = -1
+					break
+
+					break
 				if id2==idd:
 					i=-1
-					self.g[self.dest, idx, i] +=  g2
+					self.g[self.dest, idx, j] +=  g2
 					break
-				gd=self.g[self.dest, idx, i] * self.value[self.src1,idx]
-				if np.abs(min)>np.abs(gd):
+				gd=self.g[self.dest, idx, j] 
+				if abs(min)>abs(gd):
 					min=gd
 					i=idd
-			if i!=-1 and self.g[self.dest, idx, i] > g2:
+			if i!=-1:
 				self.g[self.dest, idx, i] = g2
 				self.id[self.dest, idx, i] = id2
 
@@ -95,31 +144,75 @@ class AutoFore:
 		idx=cuda.grid(1)
 		if idx>=self.value.shape[1]:
 			return
-		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx]
+		self.value[self.dest, idx] = self.value[self.src1, idx] + self.value[self.src2, idx] #
 		for i in range(self.g.shape[2]):
 			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] #
 			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
-			if self.id[self.src2, idx, i]!=-1:
+			if self.id[self.src1, idx, i]==-1:
 				break
 		for k in range(self.g.shape[2]):
 			id2=self.id[self.src2, idx, k]
 			if id2==-1:
 				break
-			i=self.id[self.dest, idx, 0]
-			min=self.g[self.dest, idx, 0] 
+			i=-1
 			g2=self.g[self.src2,idx,k] #
-           
-			for j in range(1,self.g.shape[2]):
+			min=g2 
+			
+			for j in range(self.g.shape[2]):
 				idd=self.id[self.dest, idx, j]
+				if idd==-1:
+					i=j
+					if i+1<self.g.shape[2]:
+						self.id[self.dest, idx, i+1] = -1
+					break
 				if id2==idd:
 					i=-1
-					self.g[self.dest, idx, i] +=  g2
+					self.g[self.dest, idx, j] +=  g2
 					break
-				gd=self.g[self.dest, idx, i] #
-				if np.abs(min)>np.abs(gd):
+				gd=self.g[self.dest, idx, j] 
+				if abs(min)>abs(gd):
 					min=gd
 					i=idd
-			if i!=-1 and self.g[self.dest, idx, i] > g2:
+			if i!=-1:
+				self.g[self.dest, idx, i] = g2
+				self.id[self.dest, idx, i] = id2
+
+	def sub(self):
+		idx=cuda.grid(1)
+		if idx>=self.value.shape[1]:
+			return
+		self.value[self.dest, idx] = self.value[self.src1, idx] - self.value[self.src2, idx] #
+		for i in range(self.g.shape[2]):
+			self.g[self.dest, idx, i] = self.g[self.src1, idx, i] #
+			self.id[self.dest, idx, i] = self.id[self.src1, idx, i]
+			if self.id[self.src1, idx, i]==-1:
+				break
+		for k in range(self.g.shape[2]):
+			id2=self.id[self.src1, idx, k]
+			if id2==-1:
+				break
+			i=-1
+			g2=-self.g[self.src2,idx,k] #
+			min=g2 
+			
+			for j in range(self.g.shape[2]):
+				idd=self.id[self.dest, idx, j]
+				if idd==-1:
+					i=j
+					if i+1<self.g.shape[2]:
+						self.id[self.dest, idx, i+1] = -1
+					break
+
+					break
+				if id2==idd:
+					i=-1
+					self.g[self.dest, idx, j] +=  g2
+					break
+				gd=self.g[self.dest, idx, j] 
+				if abs(min)>abs(gd):
+					min=gd
+					i=idd
+			if i!=-1:
 				self.g[self.dest, idx, i] = g2
 				self.id[self.dest, idx, i] = id2
 
@@ -165,11 +258,6 @@ class AutoFore:
 			p.value=ref.nominative[n].value
 		self.applyDelta()
 
-	def applyDelta(self):
-		for p in self.id2var.values():
-			p.value+=p.delta
-			p.delta=0
-
 	def get(self,name):
 		return self.params[name]
 
@@ -187,6 +275,12 @@ class AutoFore:
 	def var(self):
 		v=Variable(self)
 		v.assign(0)
+		return v
+	
+	def random(self,valueFrom,valueTo):
+		v=Variable(self)
+		dados=np.random.uniform(valueFrom,valueTo,self.poblacion).astype(np.float64)
+		self.assign2(v.id2,dados)
 		return v
 	
 	def param(self,valueFrom, valueTo):
@@ -222,9 +316,55 @@ class AutoFore:
 class Variable:
 	def __init__(self, nn):
 		self.nn=nn
-		self.id2=nn.nextVar
-		nn.nextVar+=1
+		if nn.nextVar==nn.variables:
+			min=nn.referencia[0]
+			i=0
+			for j in range(1,nn.variables):
+				if nn.peso[j]==1:
+					continue
+				if nn.referencia[j]<min:
+					min=nn.referencia[j]
+					i=j
+			self.id2=i
+		else:
+			self.id2=nn.nextVar
+			nn.nextVar+=1
+		nn.referencia[self.id2]=nn.operacion
+		self.firma=np.random.randint(0, 2**16)
+		nn.firma[self.id2]=self.firma
 
+	def checkFirma(self):
+		if self.firma!=self.nn.firma[self.id2]:
+			raise Exception("Firma incorrecta")
+
+	def _printGrad(self):
+		nn=self.nn
+		for id in nn.id[self.id2,0]:
+			if id==-1:
+				break
+			print(id,end=" ")
+		print()
+	
+	def value(self,id):
+		self.nn.dr.to_host("value")
+		return self.nn.value[self.id2,id]
+	
+	def error2Delta(self):
+		self.nn.error2Delta(self.id2,cpu=cpu)
+
+	def applyDelta(self,epsilon):
+		self.nn.applyDelta(self.id2,epsilon)
+	
+	def minId(self):
+		self.nn.dr.to_host("value")
+		i=0
+		min=self.nn.value[self.id2,0]
+		for j in range(1,self.nn.poblacion):
+			if self.nn.value[self.id2,j]<min:
+				min=self.nn.value[self.id2,j]
+				i=j
+		return i
+	
 	def pruning(self):
 		if self.nn.pruning==0:
 			return 
@@ -248,8 +388,7 @@ class Variable:
 		return v
 
 	def assign(self,v):
-
-		self.nn.assign(self.id2,v)
+		self.nn.assign(self.id2,v,cpu=cpu)
 
 	def set(self,v):
 		if self.valueFrom<=v.value and v.value<=self.valueTo:
@@ -263,12 +402,18 @@ class Variable:
 		self.nn.nominative.append(self)
 		return self
 
-	def get(self,v):
-		id=self.nn.var2id[v]
-		return self.forward[id]
+	def get(self,v,pob):
+		self.nn.dr.to_host("g","id")
+		id2=self.nn.id[self.id2,pob]
+		g2=self.nn.g[self.id2,pob]
+		for i in range(self.nn.gradientes):
+			if id2[i]==v.id2:
+				return g2[i]
+		return 0
 
 	def differentiable(self):
 		self.nn.differentiable(self.id2)
+		self.nn.peso[self.id2]=1
 		# self.id=len(self.nn.var2id)
 		# self.nn.var2id[self]=self.id
 		# self.nn.id2var[self.id]=self
@@ -283,9 +428,14 @@ class Variable:
 			aux=self.nn.midVar()
 			aux.assign(other)
 			other=aux
+
+		self.nn.referencia[self.id2]=self.nn.operacion
+		self.nn.referencia[other.id2]=self.nn.operacion
+		self.nn.operacion+=1
+		
 		# else:
 		# 	v.value=self.value+other.value
-		self.nn.add(v.id2,self.id2,other.id2,cpu=True)
+		self.nn.add(v.id2,self.id2,other.id2,cpu=cpu)
 
 		# for child in (self, other):
 		# 	if isinstance(child, Variable):
@@ -299,19 +449,15 @@ class Variable:
 	def __mul__(self, other):
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
-			v.value=self.value*other
-		else:
-			v.value=self.value*other.value
+			aux=self.nn.midVar()
+			aux.assign(other)
+			other=aux
 
-		children=(self, other)
-		for i,child in enumerate(children):
-			if isinstance(child, Variable):
-				for name,value in enumerate(child.forward):
-					if isinstance(children[1-i], Variable):
-						link=children[1-i].value
-					else:
-						link=children[1-i]
-					v.forward[name]+=link*value 
+		self.nn.referencia[self.id2]=self.nn.operacion
+		self.nn.referencia[other.id2]=self.nn.operacion
+		self.nn.operacion+=1
+
+		self.nn.mul(v.id2,self.id2,other.id2,cpu=cpu)
 		return v
 	
 	def __pow__(self, exponent):
@@ -365,16 +511,16 @@ class Variable:
 
 	def __sub__(self, other):
 		v=self.nn.midVar()
-		if isinstance(other, Variable):
-			v.value=self.value-other.value
-		else:
-			v.value=self.value-other
-		for i,child in enumerate((self, other)):
-			if isinstance(child, Variable):
-				for name,value in enumerate(child.forward):
+		if not isinstance(other, Variable):
+			aux=self.nn.midVar()
+			aux.assign(other)
+			other=aux
+
+		self.nn.referencia[self.id2]=self.nn.operacion
+		self.nn.referencia[other.id2]=self.nn.operacion
+		self.nn.operacion+=1
 				
-					link=1-2*i
-					v.forward[name]+=link*value 
+		self.nn.sub(v.id2,self.id2,other.id2,cpu=cpu)
 		return v
 
 	def __truediv__(self, other):
@@ -401,7 +547,25 @@ class GeneticAutoFore:
 	def __init__(self,populationSize):
 		self.population=[AutoFore(gaf=self) for i in range(populationSize)]
 
-def ejemplo_red_neuronal_polinomios():
+class Contable:
+	def __init__(self):
+		self.g=ejemplo_red_neuronal_polinomios()
+		self.A=next(self.g)	
+		self.B=next(self.g)
+
+	def check(self,v1):
+		if isinstance(v1,Variable):
+			v1=v1.value(0)
+		v2=next(self.g)
+		if hasattr(v2,"value"):
+			v2=v2.value
+		epsilon=0.01
+		if abs(v1-v2)>epsilon:
+			print(v1,v2)
+			# throw exception
+			raise Exception("No cuadra la contabilidad")
+
+def ejemplo_red_neuronal_polinomios2():
 
 	nn=AutoFore()
 
@@ -411,7 +575,7 @@ def ejemplo_red_neuronal_polinomios():
 	# z*x * x*y = z*y
 	x=2
 	y=4
-	z=4
+	z=100
 	
 	def f0(*args):
 		return sum(args)
@@ -425,87 +589,123 @@ def ejemplo_red_neuronal_polinomios():
 	fs=[f0,f1,f3,f4]
 	assert len(fs)==y
 	
+	# contable=Contable()
+	# A=contable.A
 	A=[[random.random() for j in range(x)] for i in range(z)]
 
 	Ct=[[fs[yy](*A[zz]) for zz in range(z)] for yy in range(y)]
 
 	C=[[Ct[j][i] for j in range(y)] for i in range(z)]
 
-	B=[[nn.val(random.random()).differentiable() for j in range(y)] for i in range(x)]
+	# B=[[nn.val(contable.B[i][j].value).differentiable() for j in range(y)] for i in range(x)]
+
+	B=[[nn.random(0,1).differentiable() for j in range(y)] for i in range(x)]
 	
 	totalPendientes=y
-	completado=[False]*y
+	completado=[-1]*y
 
 	# A   * B   = C
 	# z*x * x*y = z*y
+	ronda=0
 	while True:
+		ronda+=1
+		print("ronda",ronda)
 		for yy in range(y):
-			if completado[yy]:
+			if completado[yy]>-1:
 				continue
 			for b1 in B:
 				b1[yy].delta=0
-			errorTotal=0
+			errorTotal=nn.val(0)
 
 			for zz in range(z):
 				c=C[zz][yy]
 				a=A[zz]
 				cp=0
 				for xx in range(x):
-					cp+=B[xx][yy]*a[xx]
+					# contable.check(B[xx][yy])
+					# contable.check(a[xx])
+					#B[xx][yy]._printGrad()
+					aux=B[xx][yy]*a[xx]
+					#aux._printGrad()
+					cp+=aux
+					#cp._printGrad()
+					# contable.check(cp)
+					# contable.check(cp.get(B[xx][yy],0))	
 
 				#print("c",c.value)
 				error=cp-c
+				#error._printGrad()
 				error2=error*error
-				errorTotal+=error2.value
+				#error2._printGrad()
+				errorTotal+=error2
 
-				for b1 in B:
-					b=b1[yy]
-					b.delta+=error2.get(b)
+
+				error2.error2Delta()
+
+				# nn.dr.to_host("delta")
+				# for b1 in B:
+				# 	b=b1[yy]
+				# 	contable.check(nn.delta[b.id2][0])
+				# 	#b.delta+=error2.get(b)
+
+
 
 			
 			epsilon=0.01
-			for b1 in B:
-				b=b1[yy]
-				b.value-=b.delta*epsilon
+			errorTotal.applyDelta(epsilon)
+			# for b1 in B:
+			# 	b=b1[yy]
+			# 	b.value-=b.delta*epsilon
+
 			# 	print(b.value,end=" ")
 			# print()
 
 			#print("errorTotal",errorTotal)	
 
-			if errorTotal<0.0001:
-				completado[yy]=True
+			idmin=errorTotal.minId()
+
+			print("errorTotal",errorTotal.value(idmin))
+
+			if errorTotal.value(idmin)<0.0001:
+				completado[yy]=idmin
 				totalPendientes-=1
 				break
 		if totalPendientes==0:
 			# print B transpuesta
 			for yy in range(y):
 				for xx in range(x):
-					print(round(B[xx][yy].value,1),end=" ")
+					print(round(B[xx][yy].value(completado[yy]),1),end=" ")
 				print()
 			break
 		
 
-def ejemplo_simple():
+def ejemplo_simple(nn):
 	# Basado en el blog de colah
 	# https://colah.github.io/posts/2015-08-Backprop/
-	nn=AutoFore()
+	
 
 	a=nn.val(2)
 	b=nn.val(1)
 	
 	b.differentiable()
 
+	#print("db/db",b.get(b,0))
+
 	c=a+b
+	print("dc/db",c.get(b,0))
+
 	d=b+1
 	e=c*d
 
-	print("e value",e.value)
-	print("de/db",e.get(b))
+	#print("e value",e.value(0))
+	#print("de/db",e.get(b,0))
 
 
 if __name__ == '__main__':
 	start=time.time()
-	ejemplo_simple()
-	#ejemplo_red_neuronal_polinomios()
+	nn=AutoFore()
+	for i in range(1):
+		#ejemplo_simple(nn)
+		ejemplo_red_neuronal_polinomios2()
 	
 	print("Tiempo de ejecución: ",time.time()-start)

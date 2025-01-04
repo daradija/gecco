@@ -259,7 +259,7 @@ def ejemplo_red_neuronal_polinomios():
 	# z*x * x*y = z*y
 	x=2
 	y=4
-	z=4
+	z=100
 	
 	def f0(*args):
 		return sum(args)
@@ -274,19 +274,25 @@ def ejemplo_red_neuronal_polinomios():
 	assert len(fs)==y
 	
 	A=[[random.random() for j in range(x)] for i in range(z)]
+	#yield A
 
 	Ct=[[fs[yy](*A[zz]) for zz in range(z)] for yy in range(y)]
 
 	C=[[Ct[j][i] for j in range(y)] for i in range(z)]
 
 	B=[[nn.val(random.random()).derivable() for j in range(y)] for i in range(x)]
+
+	#yield B
 	
 	totalPendientes=y
 	completado=[False]*y
 
 	# A   * B   = C
 	# z*x * x*y = z*y
+	ronda=0
 	while True:
+		ronda+=1
+		print("ronda",ronda)
 		for yy in range(y):
 			if completado[yy]:
 				continue
@@ -299,7 +305,11 @@ def ejemplo_red_neuronal_polinomios():
 				a=A[zz]
 				cp=0
 				for xx in range(x):
+					#yield B[xx][yy]
+					#yield a[xx]
 					cp+=B[xx][yy]*a[xx]
+					#yield cp
+					#yield cp.get(B[xx][yy])
 
 				#print("c",c.value)
 				error=cp-c
@@ -309,8 +319,8 @@ def ejemplo_red_neuronal_polinomios():
 				for b1 in B:
 					b=b1[yy]
 					b.delta+=error2.get(b)
+					#yield b.delta
 
-			
 			epsilon=0.01
 			for b1 in B:
 				b=b1[yy]
@@ -355,5 +365,4 @@ if __name__ == '__main__':
 	start=time.time()
 	ejemplo_red_neuronal_polinomios()
 	#ejemplo_simple()
-
 	print("Tiempo de ejecución: ",time.time()-start)

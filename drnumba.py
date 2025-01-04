@@ -311,12 +311,18 @@ class EditFile:
 	def __init__(self,name):
 		self.name=name
 		# read content.
+		self.error=False
 		with open(self.name,'r') as file:
-			self.content=file.read().split("\n")
+			try:
+				self.content=file.read().split("\n")
+			except:
+				self.error=True
 	def editClass(self,name):
 		return EditClass(self,name)
 	
 	def save(self):
+		if self.error:
+			return 
 		with open(self.name, 'w') as file:
 			file.write("\n".join(self.content))
 		module_name = self.name.replace(".py", "")
@@ -326,6 +332,8 @@ class EditFile:
 class EditClass:
 	def __init__(self,file,name):
 		self.editFile=file
+		if file.error:
+			return 
 		self.name=name
 		# parase python file to get class strings
 		self.content=[]
@@ -379,6 +387,8 @@ def copyBlock(content, start):
 class EditMethod:
 	def __init__(self,editClass,name):
 		self.editClass=editClass
+		if editClass.editFile.error:
+			return
 		self.name=name
 		# parase python file to get class strings
 		self.content=[]
@@ -608,6 +618,7 @@ class DrNumba2:
 						d2=aux
 					else:
 						d2=cuda.to_device(args[iparam])
+					iparam+=1
 					args2.append(d2)
 				else:
 					# Se supone transferido a cuda.
