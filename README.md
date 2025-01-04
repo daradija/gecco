@@ -1,8 +1,6 @@
 # Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
 
-[![Video describiendo los componentes](https://img.youtube.com/vi/gUWkNzerZMI/0.jpg)](https://www.youtube.com/watch?v=gUWkNzerZMI)
-
-
+[Video describiendo los componentes](https://www.youtube.com/watch?v=gUWkNzerZMI)
 
 
 # Abstract
