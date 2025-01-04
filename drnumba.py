@@ -687,7 +687,7 @@ class DrNumba2:
 				raise Exception("Not implemented")
 
 			f[blocks_per_grid,threadsperblock](*args2)
-			cuda.synchronize()
+			#cuda.synchronize()
 
 			if post:
 				post()

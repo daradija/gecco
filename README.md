@@ -1,4 +1,8 @@
 # Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
+
+[![Componentes](https://img.youtube.com/vi/gUWkNzerZMI/0.jpg)](https://www.youtube.com/watch?v=gUWkNzerZMI)
+
+
 # Abstract
 This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic selecction. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
 

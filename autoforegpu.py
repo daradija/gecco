@@ -11,6 +11,26 @@ from autofore import ejemplo_red_neuronal_polinomios
 cpu=False
 
 drnumba=DrNumba("kernelAutofore.py")
+
+outTime={}
+inTime={}
+lastTime={}
+def Dentro(name):
+	start=time.time()
+	if name in lastTime:
+		if name not in outTime:
+			outTime[name]=0
+		outTime[name]+=start-lastTime[name]
+	def fuera():
+		end=time.time()		
+		enlapsed=end-start
+		if name not in inTime:
+			inTime[name]=0
+		inTime[name]+=enlapsed
+		lastTime[name]=end
+	return fuera
+
+
 class AutoFore:
 	def __init__(self,gaf=None,pruning=0):
 		# self.var2id={}
@@ -22,15 +42,15 @@ class AutoFore:
 
 
 		self.dr=drnumba.dr(self)
-		self.variables=10000 # en función de la memoria
-		self.poblacion=128 # en función de la gpu
-		self.gradientes=20 # número de variables, las menos significativas seran eliminadas
+		self.variables=20 # en función de la memoria
+		self.poblacion=128*128 # en función de la gpu
+		self.gradientes=4 # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
 
-		self.operacion=0 # Lleva la cuenta de las operaciones realizadas
+		#self.operacion=0 # Lleva la cuenta de las operaciones realizadas
 		self.firma=np.zeros(self.variables) # firma para detectar fallo en el reuso de variables
-		self.referencia=np.zeros(self.variables) # marca los datos usados en cada operación, para su reuso
+		#self.referencia=np.zeros(self.variables) # marca los datos usados en cada operación, para su reuso
 		self.peso=np.zeros(self.variables,dtype=np.int8) # incica si la variable es un peso del sistema
 		
 		# self.operador=-1 # Código donde se programa la operación a realizar
@@ -316,20 +336,25 @@ class AutoFore:
 class Variable:
 	def __init__(self, nn):
 		self.nn=nn
+		self.id2=nn.nextVar
+		nn.nextVar+=1
 		if nn.nextVar==nn.variables:
-			min=nn.referencia[0]
-			i=0
-			for j in range(1,nn.variables):
-				if nn.peso[j]==1:
-					continue
-				if nn.referencia[j]<min:
-					min=nn.referencia[j]
-					i=j
-			self.id2=i
-		else:
-			self.id2=nn.nextVar
+			nn.nextVar=0
+		while nn.peso[nn.nextVar]==1:
 			nn.nextVar+=1
-		nn.referencia[self.id2]=nn.operacion
+		# if nn.nextVar==nn.variables:
+		# 	min=nn.referencia[0]
+		# 	i=0
+		# 	for j in range(1,nn.variables):
+		# 		if nn.peso[j]==1:
+		# 			continue
+		# 		if nn.referencia[j]<min:
+		# 			min=nn.referencia[j]
+		# 			i=j
+		# 	self.id2=i
+		# else:
+		# 	nn.nextVar+=1
+		#nn.referencia[self.id2]=nn.operacion
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
 
@@ -356,6 +381,7 @@ class Variable:
 		self.nn.applyDelta(self.id2,epsilon)
 	
 	def minId(self):
+		fuera=Dentro("minId")
 		self.nn.dr.to_host("value")
 		i=0
 		min=self.nn.value[self.id2,0]
@@ -363,6 +389,7 @@ class Variable:
 			if self.nn.value[self.id2,j]<min:
 				min=self.nn.value[self.id2,j]
 				i=j
+		fuera()
 		return i
 	
 	def pruning(self):
@@ -423,15 +450,18 @@ class Variable:
 		return self
 		
 	def __add__(self, other):
+		self.checkFirma
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
 			aux=self.nn.midVar()
 			aux.assign(other)
 			other=aux
+		else:
+			other.checkFirma()
 
-		self.nn.referencia[self.id2]=self.nn.operacion
-		self.nn.referencia[other.id2]=self.nn.operacion
-		self.nn.operacion+=1
+		# self.nn.referencia[self.id2]=self.nn.operacion
+		# self.nn.referencia[other.id2]=self.nn.operacion
+		# self.nn.operacion+=1
 		
 		# else:
 		# 	v.value=self.value+other.value
@@ -447,15 +477,18 @@ class Variable:
 		return self.__add__(other)
 
 	def __mul__(self, other):
+		self.checkFirma()
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
 			aux=self.nn.midVar()
 			aux.assign(other)
 			other=aux
+		else:
+			other.checkFirma()
 
-		self.nn.referencia[self.id2]=self.nn.operacion
-		self.nn.referencia[other.id2]=self.nn.operacion
-		self.nn.operacion+=1
+		# self.nn.referencia[self.id2]=self.nn.operacion
+		# self.nn.referencia[other.id2]=self.nn.operacion
+		# self.nn.operacion+=1
 
 		self.nn.mul(v.id2,self.id2,other.id2,cpu=cpu)
 		return v
@@ -510,15 +543,18 @@ class Variable:
 		return v
 
 	def __sub__(self, other):
+		self.checkFirma()
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
 			aux=self.nn.midVar()
 			aux.assign(other)
 			other=aux
+		else:
+			other.checkFirma()
 
-		self.nn.referencia[self.id2]=self.nn.operacion
-		self.nn.referencia[other.id2]=self.nn.operacion
-		self.nn.operacion+=1
+		# self.nn.referencia[self.id2]=self.nn.operacion
+		# self.nn.referencia[other.id2]=self.nn.operacion
+		# self.nn.operacion+=1
 				
 		self.nn.sub(v.id2,self.id2,other.id2,cpu=cpu)
 		return v
