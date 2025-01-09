@@ -346,3 +346,36 @@ def AutoFore_CPU_assign2(value,delta,g,id,id_var,v2):
 	for i in range(g.shape[2]):
 		g[id_var, idx, i] = 0
 		id[id_var, idx,i] = -1
+
+@cuda.jit
+def AutoFore_execute2(value,delta,g,id,ins):
+	for x in ins:
+		op = (x >> 48) & 0xFFFF
+		dest = (x >> 32) & 0xFFFF
+		src1 = (x >> 16) & 0xFFFF
+		src2 = x & 0xFFFF
+
+		if op==0:
+			AutoFore_add(value,delta,g,id,dest,src1,src2)
+		elif op==1:
+			AutoFore_mul(value,delta,g,id,dest,src1,src2)	
+		elif op==2:
+			AutoFore_sub(value,delta,g,id,dest,src1,src2)
+		cuda.syncthreads()
+	
+@cpu.jit
+def AutoFore_CPU_execute2(value,delta,g,id,ins):
+	for x in ins:
+		op = (x >> 48) & 0xFFFF
+		dest = (x >> 32) & 0xFFFF
+		src1 = (x >> 16) & 0xFFFF
+		src2 = x & 0xFFFF
+
+		if op==0:
+			AutoFore_CPU_add(value,delta,g,id,dest,src1,src2)
+		elif op==1:
+			AutoFore_CPU_mul(value,delta,g,id,dest,src1,src2)	
+		elif op==2:
+			AutoFore_CPU_sub(value,delta,g,id,dest,src1,src2)
+		cpu.syncthreads()
+	

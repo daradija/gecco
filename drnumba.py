@@ -51,7 +51,10 @@ class CudaKernelWrapper:
 
 	def __call__(self, *args, **kwargs):
 		# Aquí puedes hacer cualquier preprocesamiento de los argumentos si es necesario
-		self.kernel[self.blocks, self.threads](*args, **kwargs)
+		if self.blocks is None or self.threads is None:
+			self.kernel(*args, **kwargs)
+		else:
+			self.kernel[self.blocks, self.threads](*args, **kwargs)
 class X:
 	def __init__(self):
 		self.x=0
@@ -409,13 +412,13 @@ class EditMethod:
 			# if self.start>=0:
 			# 	self.content.append(l)
 
-	def rename(self,name):
-		k=EditMethod(self.editClass,name)
+	def toCpu(self,module,name):
+		k=EditMethod(self.editClass,module+"_"+name)
 		k.content=list(self.content)
 		k.editFile=self.editFile
 		for i,l in enumerate(k.content):
-			k.content[i]=l.replace("cuda.","cpu.")
-		k.content[1]=k.content[1].replace("def "+self.name,"def "+name)
+			k.content[i]=l.replace("cuda.","cpu.").replace(module,module+"_CPU")
+		#k.content[1]=k.content[1].replace("def "+self.name,"def "+module+"_CPU_"+name)
 		k.name=name
 		return k
 
@@ -508,29 +511,37 @@ class DrNumba2:
 			if d.name in lista:
 				d.to_host()
 
-	def prepareReplaces(self,objName,fName,replace,pre="",className=None):
+	def prepareReplaces2(self,objName,fName,replace,pre="",includeParam=True):
 		data=[]
 		data2=[]
 		for d in self._data:
 			if d.dtype==None:
 				si=d.param==None
-				if not si:
+				if not si and includeParam:
 					if fName in d.param:
 						si=True
 				if si:
-					replace.append((objName+"."+d.name,pre+d.name))	
+					if replace!=None:
+						replace.append((objName+"."+d.name,pre+d.name))	
 					data.append(pre+d.name)
 					data2.append(d)
 			else:
+				raise Exception("Programed, but not understood")
 				d2=getattr(self.obj,d.name)
 				data3,data4=d2.dr.prepareReplaces(objName+"."+d.name,fName,replace,pre+d.name+"_",className=d.dtype)	
 				data.extend(data3)
 				data2.extend(data4)
+		return data,data2
+
+	def prepareReplaces(self,objName,fName,replace,pre="",className=None):
+		data,data2=self.prepareReplaces2(objName,fName,replace,pre)
 		replace.append((objName+")",",".join(data)+")"))
 		replace.append((objName+",",",".join(data)+","))
 		def esUnaFuncion(s):
 			primerParentesisEn=s.find("(")
-			r=className+"_"+s[:primerParentesisEn]+"("+",".join(data)+s[primerParentesisEn:]
+			fNameIn=s[:primerParentesisEn]
+			dataIn,data2In=self.prepareReplaces2(objName,fNameIn,None,pre,includeParam=False)
+			r=className+"_"+s[:primerParentesisEn]+"("+",".join(dataIn)+","+s[primerParentesisEn+1:]
 			return r
 		replace.append((objName+".",esUnaFuncion))
 		return data,data2
@@ -594,7 +605,7 @@ class DrNumba2:
 		#editKernel.save(editKernel.editClass.start+len(editKernel.editClass.content))
 		editKernel.save(len(editKernel.editFile.content))
 
-		editCPU=editKernel.rename(objName+"_CPU_"+name)
+		editCPU=editKernel.toCpu(objName,name)
 		editCPU.save(len(editKernel.editFile.content))
 
 		editKernel.editFile.save()
@@ -686,7 +697,10 @@ class DrNumba2:
 			else:
 				raise Exception("Not implemented")
 
+			from autoforegpu import Dentro
+			fuera=Dentro(name)
 			f[blocks_per_grid,threadsperblock](*args2)
+			fuera()
 			#cuda.synchronize()
 
 			if post:

@@ -230,5 +230,3 @@ Industrial Robotic: Programming, Simulation and Applications, disponible via Fam
 
 
 
-
-

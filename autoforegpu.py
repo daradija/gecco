@@ -15,6 +15,7 @@ drnumba=DrNumba("kernelAutofore.py")
 outTime={}
 inTime={}
 lastTime={}
+lastPrint=time.time()
 def Dentro(name):
 	start=time.time()
 	if name in lastTime:
@@ -22,12 +23,17 @@ def Dentro(name):
 			outTime[name]=0
 		outTime[name]+=start-lastTime[name]
 	def fuera():
+		global lastPrint
 		end=time.time()		
 		enlapsed=end-start
 		if name not in inTime:
 			inTime[name]=0
 		inTime[name]+=enlapsed
 		lastTime[name]=end
+		if (end - lastPrint) > 1 and name in outTime:
+			porcentaje=100*inTime[name]/(inTime[name]+outTime[name])
+			print("Porcentaje de tiempo en",name,round(porcentaje,2),"%")
+			lastPrint=end
 	return fuera
 
 
@@ -43,8 +49,8 @@ class AutoFore:
 
 		self.dr=drnumba.dr(self)
 		self.variables=20 # en función de la memoria
-		self.poblacion=128*128 # en función de la gpu
-		self.gradientes=4 # número de variables, las menos significativas seran eliminadas
+		self.poblacion=1024*10 # en función de la gpu
+		self.gradientes=8 # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
 
@@ -58,18 +64,18 @@ class AutoFore:
 		# self.r2=-1
 		# self.r3=-1
 
-		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float64)
+		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float32)
 		self.dr.data("variables","poblacion","value")
-		self.delta=np.zeros((self.variables,self.poblacion),dtype=np.float64)
+		self.delta=np.zeros((self.variables,self.poblacion),dtype=np.float32)
 		self.dr.data("variables","poblacion","delta")
-		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float64)
+		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float32)
 		self.dr.data("variables","poblacion","gradientes","g")
 		self.id=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.int16) # posición que ocupa la variable
 		self.dr.data("variables","poblacion","gradientes","id")
 
 		#self.id_var=np.int16(0)
 		self.dr.data("id_var",param=["assign","differentiable","assign2"])
-		#self.v=np.float64(0)
+		#self.v=np.float32(0)
 		self.dr.data("v",param=["assign"])
 		self.dr.data("poblacion","v2",param=["assign2"])
 		self.dr.function("assign","poblacion")
@@ -299,7 +305,7 @@ class AutoFore:
 	
 	def random(self,valueFrom,valueTo):
 		v=Variable(self)
-		dados=np.random.uniform(valueFrom,valueTo,self.poblacion).astype(np.float64)
+		dados=np.random.uniform(valueFrom,valueTo,self.poblacion).astype(np.float32)
 		self.assign2(v.id2,dados)
 		return v
 	
@@ -381,7 +387,7 @@ class Variable:
 		self.nn.applyDelta(self.id2,epsilon)
 	
 	def minId(self):
-		fuera=Dentro("minId")
+		#fuera=Dentro("minId")
 		self.nn.dr.to_host("value")
 		i=0
 		min=self.nn.value[self.id2,0]
@@ -389,7 +395,7 @@ class Variable:
 			if self.nn.value[self.id2,j]<min:
 				min=self.nn.value[self.id2,j]
 				i=j
-		fuera()
+		#fuera()
 		return i
 	
 	def pruning(self):
@@ -465,7 +471,9 @@ class Variable:
 		
 		# else:
 		# 	v.value=self.value+other.value
+		#fuera=Dentro("add")
 		self.nn.add(v.id2,self.id2,other.id2,cpu=cpu)
+		#fuera()
 
 		# for child in (self, other):
 		# 	if isinstance(child, Variable):
@@ -490,7 +498,9 @@ class Variable:
 		# self.nn.referencia[other.id2]=self.nn.operacion
 		# self.nn.operacion+=1
 
+		#fuera=Dentro("mul")
 		self.nn.mul(v.id2,self.id2,other.id2,cpu=cpu)
+		#fuera()
 		return v
 	
 	def __pow__(self, exponent):
@@ -657,6 +667,7 @@ def ejemplo_red_neuronal_polinomios2():
 				c=C[zz][yy]
 				a=A[zz]
 				cp=0
+				
 				for xx in range(x):
 					# contable.check(B[xx][yy])
 					# contable.check(a[xx])
@@ -667,7 +678,6 @@ def ejemplo_red_neuronal_polinomios2():
 					#cp._printGrad()
 					# contable.check(cp)
 					# contable.check(cp.get(B[xx][yy],0))	
-
 				#print("c",c.value)
 				error=cp-c
 				#error._printGrad()
