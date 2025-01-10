@@ -1,7 +1,19 @@
 # Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
 
+# Contenido
 [Video describiendo los componentes](https://www.youtube.com/watch?v=gUWkNzerZMI)
 
+Fuera de video:
+
+* autoforegpu.py es una migración a gpu.
+* autoforegpu2.py es un intento sin éxito de acelerar agrupando las llamadas usando ejecución perezosa.
+* autoforegpu3.py es un intento sin éxito de acelarar incluyendo la asignación. Sube el número de variables ya que las constantes ocupan registros.
+
+En cualquier caso aunque sea un fallo, está pendiente de repetir los experimentos con un problema mas complejo de los dos autocontenidos en la familia de ficheros autofore. Los dos ejemplos son el del blog de colah (https://colah.github.io/posts/2015-08-Backprop/)
+
+* autoforenumpy.py en ejemplo_simple() verifico que numpy puede realizar operaciones en paralelo. Confirmo que numpy usa optimizaciones a bajo nivel. En windows se usan todas las cpus y en mac usa optimizaciones para ARM.
+
+Deriva de la versión de autoforegpu ya que no se tiene que pedir memoria, cuestión que es muy lenta en python.
 
 # Abstract
 This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic selecction. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.

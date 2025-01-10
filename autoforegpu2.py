@@ -52,7 +52,7 @@ class AutoFore:
 
 		self.dr=drnumba.dr(self)
 		self.variables=20 # en función de la memoria
-		self.poblacion=1024*10 # en función de la gpu
+		self.poblacion=1024 # en función de la gpu
 		self.gradientes=8 # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
@@ -653,16 +653,16 @@ def ejemplo_red_neuronal_polinomios2():
 	fs=[f0,f1,f3,f4]
 	assert len(fs)==y
 	
-	contable=Contable()
-	A=contable.A
-	#A=[[random.random() for j in range(x)] for i in range(z)]
+	#contable=Contable()
+	#A=contable.A
+	A=[[random.random() for j in range(x)] for i in range(z)]
 
 	Ct=[[fs[yy](*A[zz]) for zz in range(z)] for yy in range(y)]
 
 	C=[[Ct[j][i] for j in range(y)] for i in range(z)]
 
-	B=[[nn.val(contable.B[i][j].value).differentiable() for j in range(y)] for i in range(x)]
-	#B=[[nn.random(0,1).differentiable() for j in range(y)] for i in range(x)]
+	#B=[[nn.val(contable.B[i][j].value).differentiable() for j in range(y)] for i in range(x)]
+	B=[[nn.random(0,1).differentiable() for j in range(y)] for i in range(x)]
 	
 	totalPendientes=y
 	completado=[-1]*y
