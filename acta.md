@@ -4,4 +4,4 @@
 * Reunión de seguimiento el jueves siguiente.
 * Pasar a trabajar a overleaf con la plantilla.
 * Incluir estado del arte y abstract.
-* Programar la calibración por cámaras.
+* [Programar la calibración por cámaras](implementacion.md).

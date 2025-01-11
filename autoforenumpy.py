@@ -78,8 +78,7 @@ class AutoFore:
 	def assign2(self,id_var,v2):	
 		self.value[id_var] = v2
 		self.g[id_var] = 0
-		self.id[id_var] = -1
-
+		
 	def applyDelta(self):
 		idx,idy=cuda.grid(2)
 		if idx>=self.value.shape[1] or idy>=self.g.shape[2]:
