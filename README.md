@@ -1,5 +1,6 @@
 # Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
-
+# Alterntiva 1: Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration using cameras
+# Alternativa 2 : Robot Kinematics calibration using Computational Differentiation and Genetic Algorithms
 # [Acta](acta.md)
 
 # Contenido
@@ -18,7 +19,7 @@ En cualquier caso aunque sea un fallo, está pendiente de repetir los experiment
 Deriva de la versión de autoforegpu∂ ya que no se tiene que pedir memoria, cuestión que es muy lenta en python.
 
 # Abstract
-This paper presents a novel technique that combines genetic algorithms and neural networks, specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic selecction. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
+This paper presents a novel technique that combines genetic algorithms and neural networks??? (Computational differentiation??), specifically designed for model parameter calibration. The innovation lies in the simultaneous adjustment of parameters by both the neural network and the genetic selecction. This method is applied to a robotic kinematics inversion problem, where a physical model is used to adjust movement, and the proposed technique is employed to find the model's parameters.
 
 A CUDA implementation is provided, making it an ideal solution for modeling complex systems. The technique leverages self-differentiation, affine transformation matrices, forward mode, and a hybrid approach that combines genetic algorithms with gradient descent to estimate the kinematic inverse of a robotic arm through camera adjustment in a simulated environment.
 
