@@ -1,6 +1,7 @@
 # Technique Using Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration 
-# Alterntiva 1: Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration using cameras
-# Alternativa 2 : Robot Kinematics calibration using Computational Differentiation and Genetic Algorithms
+* Alterntiva 1: Genetic Algorithms and Neural Networks with Application to Robot Kinematics Inversion for Model Calibration using cameras
+* Alternativa 2 : Robot Kinematics calibration using Computational Differentiation and Genetic Algorithms
+
 # [Acta](acta.md)
 
 # Contenido
