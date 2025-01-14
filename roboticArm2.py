@@ -110,13 +110,14 @@ class Clock:
 
 
 		center=Transform(nn)
-		center.translate((nn.val(p.width//2),nn.val(p.height//2)))
+		center.translate((nn.val(p.width//3),nn.val(p.height//2)))
 
 		ma=nn.val(200).derivable()
 		md=nn.val(100).derivable()
 		mb=nn.val(50).derivable()
 
 		radio_ojo=100
+		focus_cam=(p.width,p.height//2)
 
 		a=Arm(p,nn,ma,p.red)
 		a.setAngle(math.pi)
@@ -131,7 +132,7 @@ class Clock:
 
 		
 		circle_position = None  # Posición donde se dibujará el círculo
-		focus_cam=None # Posición de la cámara
+		
 
 		running = True
 		while running:
@@ -184,14 +185,14 @@ class Clock:
 
 
 					# calcula el punto medio
-					middle=((c.x.value+focus_cam[0])//2,(c.y.value+focus_cam[1])//2)
+					#middle=((c.x.value+focus_cam[0])//2,(c.y.value+focus_cam[1])//2)
 					# draw a label m in the middle
 					# font = pygame.font.Font(None, 36)
 					# text = font.render(str(round(angle.value,2)), True, c.color)
 					# screen.blit(text, middle)
 
-					#derivate=angle.get(c.angle)*100
-					derivate=angle.get(c.segment_length)*10000
+					derivate=angle.get(c.angle)*100
+					#derivate=angle.get(c.segment_length)*10000
 					
 					# draw a ortogonal line from the middle with module derivate
 					# Calcula el vector ortogonal (derivada perpendicular)
