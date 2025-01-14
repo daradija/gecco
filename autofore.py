@@ -183,6 +183,15 @@ class Variable:
 			link=-1
 			v.forward[name]+=link*value 
 		return v
+	
+	def atan(self):
+		v=self.nn.midVar()
+		v.value=math.atan(self.value)
+		child=self
+		for name,value in enumerate(child.forward):
+			link=1/(1+child.value**2)
+			v.forward[name]+=link*value 
+		return v
 
 	def sin(self):
 		v=self.nn.midVar()
