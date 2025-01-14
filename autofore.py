@@ -274,7 +274,7 @@ def ejemplo_red_neuronal_polinomios():
 	assert len(fs)==y
 	
 	A=[[random.random() for j in range(x)] for i in range(z)]
-	yield A
+	#yield A
 
 	Ct=[[fs[yy](*A[zz]) for zz in range(z)] for yy in range(y)]
 
@@ -282,7 +282,7 @@ def ejemplo_red_neuronal_polinomios():
 
 	B=[[nn.val(random.random()).derivable() for j in range(y)] for i in range(x)]
 
-	yield B
+	#yield B
 	
 	totalPendientes=y
 	completado=[False]*y
@@ -305,11 +305,11 @@ def ejemplo_red_neuronal_polinomios():
 				a=A[zz]
 				cp=0
 				for xx in range(x):
-					yield B[xx][yy]
-					yield a[xx]
+					#yield B[xx][yy]
+					#yield a[xx]
 					cp+=B[xx][yy]*a[xx]
-					yield cp
-					yield cp.get(B[xx][yy])
+					#yield cp
+					#yield cp.get(B[xx][yy])
 
 				#print("c",c.value)
 				error=cp-c
@@ -319,16 +319,18 @@ def ejemplo_red_neuronal_polinomios():
 				for b1 in B:
 					b=b1[yy]
 					b.delta+=error2.get(b)
-					yield b.delta
+					#yield b.delta
 
 			epsilon=0.01
 			for b1 in B:
 				b=b1[yy]
 				b.value-=b.delta*epsilon
+				#yield b.value
 			# 	print(b.value,end=" ")
 			# print()
 
 			#print("errorTotal",errorTotal)	
+			#yield errorTotal
 
 			if errorTotal<0.0001:
 				completado[yy]=True

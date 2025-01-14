@@ -42,7 +42,7 @@ def Dentro(name):
 class AutoFore:
 	def __init__(self,gaf=None,pruning=0):
 		self.variables=20 # en función de la memoria
-		self.poblacion=128 # en función de la gpu
+		self.poblacion=128*10 # en función de la gpu
 		self.gradientes=8 # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
@@ -231,7 +231,7 @@ class Variable:
 	def applyDelta(self,epsilon):
 		#self.nn.applyDelta(self.id2,epsilon)
 		for peso,id in enumerate(self.nn.peso2id):
-			self.nn.value[id]+=self.nn.delta[:,peso]*epsilon
+			self.nn.value[id]-=self.nn.delta[:,peso]*epsilon
 		self.nn.delta=0
 	
 	def minId(self):
@@ -291,6 +291,7 @@ class Variable:
 			raise Exception("No hay más gradientes")
 		self.idPeso=self.nn.nextPeso
 		self.nn.nextPeso+=1
+		self.nn.peso2id[self.idPeso]=self.id2
 		#self.nn.differentiable(self.id2,self.idPeso)
 		self.nn.peso[self.id2]=1
 		# self.id=len(self.nn.var2id)
@@ -483,17 +484,16 @@ def ejemplo_red_neuronal_polinomios2():
 	fs=[f0,f1,f3,f4]
 	assert len(fs)==y
 	
-	contable=Contable()
-	A=contable.A
-	#A=[[random.random() for j in range(x)] for i in range(z)]
+	# contable=Contable()
+	# A=contable.A
+	A=[[random.random() for j in range(x)] for i in range(z)]
 
 	Ct=[[fs[yy](*A[zz]) for zz in range(z)] for yy in range(y)]
 
 	C=[[Ct[j][i] for j in range(y)] for i in range(z)]
 
-	B=[[nn.val(contable.B[i][j].value).differentiable() for j in range(y)] for i in range(x)]
-
-	#B=[[nn.random(0,1).differentiable() for j in range(y)] for i in range(x)]
+	# B=[[nn.val(contable.B[i][j].value).differentiable() for j in range(y)] for i in range(x)]
+	B=[[nn.random(0,1).differentiable() for j in range(y)] for i in range(x)]
 	
 	totalPendientes=y
 	completado=[-1]*y
@@ -517,15 +517,15 @@ def ejemplo_red_neuronal_polinomios2():
 				cp=0
 				
 				for xx in range(x):
-					contable.check(B[xx][yy])
-					contable.check(a[xx])
+					# contable.check(B[xx][yy])
+					# contable.check(a[xx])
 					#B[xx][yy]._printGrad()
 					aux=B[xx][yy]*a[xx]
 					#aux._printGrad()
 					cp+=aux
 					#cp._printGrad()
-					contable.check(cp)
-					contable.check(cp.get(B[xx][yy],0))	
+					# contable.check(cp)
+					# contable.check(cp.get(B[xx][yy],0))	
 				#print("c",c.value)
 				error=cp-c
 				#error._printGrad()
@@ -537,10 +537,9 @@ def ejemplo_red_neuronal_polinomios2():
 				error2.error2Delta()
 
 				# nn.dr.to_host("delta")
-				for b1 in B:
-					b=b1[yy]
-					contable.check(nn.delta[b.id2][0])
-					#b.delta+=error2.get(b)
+				# for b1 in B:
+				# 	b=b1[yy]
+				# 	contable.check(nn.delta[0][b.idPeso])
 
 
 
@@ -549,7 +548,7 @@ def ejemplo_red_neuronal_polinomios2():
 			errorTotal.applyDelta(epsilon)
 			# for b1 in B:
 			# 	b=b1[yy]
-			# 	b.value-=b.delta*epsilon
+			# 	contable.check(b.value(0))
 
 			# 	print(b.value,end=" ")
 			# print()
@@ -559,6 +558,7 @@ def ejemplo_red_neuronal_polinomios2():
 			idmin=errorTotal.minId()
 
 			print("errorTotal",errorTotal.value(idmin))
+			# contable.check(errorTotal.value(idmin))
 
 			if errorTotal.value(idmin)<0.0001:
 				completado[yy]=idmin

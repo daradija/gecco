@@ -6,7 +6,7 @@ Los gradientes ocupan posiciones fijas. Tienen su propio espacio. Por lo tanto l
 
 AutoFore peso2id contiene la traducción de la posición a la variable que le corresponde.
 
-Delta tiene una primera dimensión diferente:
+Peso y Delta tiene una primera dimensión diferente, pasa de población a gradientes:
 
 self.delta=np.zeros((self.poblacion,self.gradientes),dtype=np.float32)
 
