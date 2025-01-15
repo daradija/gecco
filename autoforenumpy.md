@@ -10,3 +10,5 @@ Peso y Delta tiene una primera dimensión diferente, pasa de población a gradie
 
 self.delta=np.zeros((self.poblacion,self.gradientes),dtype=np.float32)
 
+
+Hay un instrumento complejo, const que ha tenido que ser creado para el reciclaje de variables.

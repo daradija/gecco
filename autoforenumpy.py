@@ -1,8 +1,8 @@
 # deriva de autoforegpu.py
-# paso de variable a una población, se usa la paralelización de numpy
+# paso de variable a uoa población, se usa la paralelización de numpy
 import numpy as np
 import time
-np.__config__.show()
+#np.__config__.show()
 
 
 # Es una copia de autofore.py
@@ -14,36 +14,13 @@ import random,math,time
 import numpy as np
 from autofore import ejemplo_red_neuronal_polinomios
 
-outTime={}
-inTime={}
-lastTime={}
-lastPrint=time.time()
-def Dentro(name):
-	start=time.time()
-	if name in lastTime:
-		if name not in outTime:
-			outTime[name]=0
-		outTime[name]+=start-lastTime[name]
-	def fuera():
-		global lastPrint
-		end=time.time()		
-		enlapsed=end-start
-		if name not in inTime:
-			inTime[name]=0
-		inTime[name]+=enlapsed
-		lastTime[name]=end
-		if (end - lastPrint) > 1 and name in outTime:
-			porcentaje=100*inTime[name]/(inTime[name]+outTime[name])
-			print("Porcentaje de tiempo en",name,round(porcentaje,2),"%")
-			lastPrint=end
-	return fuera
 
 
 class AutoFore:
-	def __init__(self,gaf=None,pruning=0):
-		self.variables=20 # en función de la memoria
-		self.poblacion=128*10 # en función de la gpu
-		self.gradientes=8 # número de variables, las menos significativas seran eliminadas
+	def __init__(self,gaf=None,pruning=0,variables=20,gradientes=8,poblacion=128*10):
+		self.variables=variables # en función de la memoria
+		self.poblacion=poblacion # en función de la gpu
+		self.gradientes=gradientes # número de variables, las menos significativas seran eliminadas
 
 		self.nextVar=0 # Siguiente variable a usar
 		self.nextPeso=0 # Siguiente peso a usar
@@ -56,6 +33,7 @@ class AutoFore:
 		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float32)
 		self.delta=np.zeros((self.poblacion,self.gradientes),dtype=np.float32)
 		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float32)
+		self.prohibitedConst=False
 	
 	def assign2(self,id_var,v2):	
 		self.value[id_var] = v2
@@ -81,6 +59,11 @@ class AutoFore:
 		for idx in range(self.value.shape[1]):
 			self.g[dest, idx] = self.g[src1, idx]*self.value[src2, idx]+self.g[src2, idx]*self.value[src1, idx] #
 
+	def div(self,dest,src1,src2):
+		self.value[dest] = self.value[src1] / self.value[src2]
+		for idx in range(self.value.shape[1]):
+			self.g[dest, idx] = self.g[src1, idx]/self.value[src2, idx]-self.value[src1, idx]*self.g[src2, idx]/(self.value[src2, idx]**2)
+
 	def add(self,dest,src1,src2):
 		self.value[dest] = self.value[src1] + self.value[src2]
 		self.g[dest] = self.g[src1] + self.g[src2]
@@ -88,6 +71,25 @@ class AutoFore:
 	def sub(self,dest,src1,src2):
 		self.value[dest] = self.value[src1] - self.value[src2]	
 		self.g[dest] = self.g[src1] - self.g[src2]
+
+	def cos(self,dest,src):
+		self.value[dest] = np.cos(self.value[src])
+		for idx in range(self.value.shape[1]):
+			self.g[dest, idx] = -np.sin(self.value[src, idx])*self.g[src, idx]
+
+	def atan(self,dest,src):
+		self.value[dest] = np.arctan(self.value[src])
+		for idx in range(self.value.shape[1]):
+			self.g[dest, idx] = 1/(1+self.value[src, idx]**2)*self.g[src, idx]
+	
+	def sin(self,dest,src):
+		self.value[dest] = np.sin(self.value[src])
+		for idx in range(self.value.shape[1]):
+			self.g[dest, idx] = np.cos(self.value[src, idx])*self.g[src, idx]
+
+	def neg(self,dest,src):
+		self.value[dest] = -self.value[src]
+		self.g[dest] = -self.g[src]
 
 	def differentiable(self,id_var):
 		self.g[id_var] = 0
@@ -143,6 +145,17 @@ class AutoFore:
 		v.assign(value)
 		return v
 	
+	def const(self,value):
+		if self.prohibitedConst:
+ 			raise Exception("No se pueden crear más constantes")
+		v=Variable(self)
+		v.assign(value)
+		self.peso[v.id2]=1
+		return v
+	
+	def noMoreConst(self):
+		self.prohibitedConst=True
+	
 	def var(self):
 		v=Variable(self)
 		v.assign(0)
@@ -168,6 +181,7 @@ class AutoFore:
 
 	def midVar(self):
 		v=Variable(self)
+		self.g[v.id2]=0
 		#v.forward=[0]*len(self.var2id)
 		return v
 	
@@ -191,9 +205,13 @@ class Variable:
 		nn.nextVar+=1
 		self.idPeso=-1
 		if nn.nextVar==nn.variables:
+			#print("Reciclando variables")
 			nn.nextVar=0
-		while nn.peso[nn.nextVar]==1:
+		while nn.peso[self.id2]==1:
+			self.id2=nn.nextVar
 			nn.nextVar+=1
+			if nn.nextVar==nn.variables:
+				nn.nextVar=0
 		# if nn.nextVar==nn.variables:
 		# 	min=nn.referencia[0]
 		# 	i=0
@@ -207,12 +225,14 @@ class Variable:
 		# else:
 		# 	nn.nextVar+=1
 		#nn.referencia[self.id2]=nn.operacion
+		if self.id2==18:
+			print("id",self.id2)
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
 
 	def checkFirma(self):
 		if self.firma!=self.nn.firma[self.id2]:
-			raise Exception("Firma incorrecta")
+			raise Exception("Firma incorrecta en la variable",self.id2)
 
 	def _printGrad(self):
 		nn=self.nn
@@ -268,8 +288,12 @@ class Variable:
 		return v
 
 	def assign(self,v):
-		self.nn.value[self.id2]=v
-		self.nn.g[self.id2]=0
+		if isinstance(v,Variable):
+			self.nn.value[self.id2]=self.nn.value[v.id2]
+			self.nn.g[self.id2]=self.nn.g[v.id2]
+		else:
+			self.nn.value[self.id2]=v
+		#self.nn.g[self.id2]=0
 
 	def set(self,v):
 		if self.valueFrom<=v.value and v.value<=self.valueTo:
@@ -292,20 +316,13 @@ class Variable:
 		self.idPeso=self.nn.nextPeso
 		self.nn.nextPeso+=1
 		self.nn.peso2id[self.idPeso]=self.id2
-		#self.nn.differentiable(self.id2,self.idPeso)
 		self.nn.peso[self.id2]=1
-		# self.id=len(self.nn.var2id)
-		# self.nn.var2id[self]=self.id
-		# self.nn.id2var[self.id]=self
-		# self.forward=[0]*len(self.nn.var2id)
-		# self.forward[self.id]=1
-		# self.delta=0
 		self.nn.g[self.id2]=0
 		self.nn.g[self.id2,:,self.idPeso]=1
 		return self
 		
 	def __add__(self, other):
-		self.checkFirma
+		self.checkFirma()
 		v=self.nn.midVar()
 		if not isinstance(other, Variable):
 			aux=self.nn.midVar()
@@ -353,6 +370,7 @@ class Variable:
 		return v
 	
 	def __pow__(self, exponent):
+		self.checkFirma()
 		# Crear una nueva variable para el resultado
 		v = self.nn.midVar()
 		
@@ -366,33 +384,32 @@ class Variable:
 		return v
 
 	def __neg__(self):
+		self.checkFirma()
 		v=self.nn.midVar()
-		v.value=-self.value
-		child=self
-		for name,value in enumerate(child.forward):
-			link=-1
-			v.forward[name]+=link*value 
+		self.nn.neg(v.id2,self.id2)
 		return v
 
 	def sin(self):
+		self.checkFirma()
 		v=self.nn.midVar()
-		v.value=math.sin(self.value)
-		child=self
-		for name,value in enumerate(child.forward):
-			link=math.cos(child.value)
-			v.forward[name]+=link*value 
+		self.nn.sin(v.id2,self.id2)
 		return v
 
 	def cos(self):
+		self.checkFirma()
 		v=self.nn.midVar()
-		v.value=math.cos(self.value)
-		child=self
-		for name,value in enumerate(child.forward):
-			link=-math.sin(child.value)
-			v.forward[name]+=link*value 
+		self.nn.cos(v.id2,self.id2) 
+		return v
+	
+	def atan(self):
+		self.checkFirma()
+		v=self.nn.midVar()
+		self.nn.atan(v.id2,self.id2)
 		return v
 
+
 	def sigmoid(self):
+		self.checkFirma()
 		v=self.nn.midVar()
 		v.value=1 / (1 + math.exp(-self.value))
 		for name,value in enumerate(self.forward):
@@ -419,24 +436,34 @@ class Variable:
 		return v
 
 	def __truediv__(self, other):
+		self.checkFirma()
 		v=self.nn.midVar()
-		if isinstance(other, Variable):
-			v.value=self.value/other.value
-		else:
-			v.value=self.value/other
-		for i,child in enumerate((self, other)):
-			if isinstance(child, Variable):
-				for name,value in enumerate(child.forward):
-					if i==0:
-						if isinstance(other, Variable):
-							link=1/other.value
-						else:
-							link=1/other
-					else:
-						link=-v.value/(other.value**2)
-					v.forward[name]+=link*value 
+		self.nn.div(v.id2,self.id2,other.id2)
 		return v
 
+outTime={}
+inTime={}
+lastTime={}
+lastPrint=time.time()
+def Dentro(name):
+	start=time.time()
+	if name in lastTime:
+		if name not in outTime:
+			outTime[name]=0
+		outTime[name]+=start-lastTime[name]
+	def fuera():
+		global lastPrint
+		end=time.time()		
+		enlapsed=end-start
+		if name not in inTime:
+			inTime[name]=0
+		inTime[name]+=enlapsed
+		lastTime[name]=end
+		if (end - lastPrint) > 1 and name in outTime:
+			porcentaje=100*inTime[name]/(inTime[name]+outTime[name])
+			print("Porcentaje de tiempo en",name,round(porcentaje,2),"%")
+			lastPrint=end
+	return fuera
 
 class GeneticAutoFore:
 	def __init__(self,populationSize):
