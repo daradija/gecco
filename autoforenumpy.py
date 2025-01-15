@@ -39,15 +39,10 @@ class AutoFore:
 		self.value[id_var] = v2
 		self.g[id_var] = 0
 		
-	def applyDelta(self):
-		idx,idy=cuda.grid(2)
-		if idx>=self.value.shape[1] or idy>=self.g.shape[2]:
-			return
-		idaux=self.id[self.dest, idx, idy]
-		if idaux==-1:
-			return
-		self.value[idaux,idx] -= self.delta[idaux,idx] * self.epsilon
-		self.delta[idaux,idx] = 0
+	def applyDelta(self,epsilon):
+		for peso,id in enumerate(self.peso2id):
+			self.value[id]-=self.delta[:,peso]*epsilon
+		self.delta=0
 
 	def error2Delta(self,id):
 		self.delta += self.g[id]
@@ -225,7 +220,7 @@ class Variable:
 		# else:
 		# 	nn.nextVar+=1
 		#nn.referencia[self.id2]=nn.operacion
-		if self.id2==18:
+		if self.id2==22:
 			print("id",self.id2)
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
@@ -291,6 +286,14 @@ class Variable:
 		if isinstance(v,Variable):
 			self.nn.value[self.id2]=self.nn.value[v.id2]
 			self.nn.g[self.id2]=self.nn.g[v.id2]
+			# si tiene peso se presta
+			if v.idPeso!=-1:
+				self.idPeso=v.idPeso
+				self.nn.peso2id[self.idPeso]=self.id2
+				self.nn.peso[self.id2]=1
+				
+				# Free the other variable
+				v.idPeso=-1
 		else:
 			self.nn.value[self.id2]=v
 		#self.nn.g[self.id2]=0

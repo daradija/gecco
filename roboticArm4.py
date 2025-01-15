@@ -56,31 +56,33 @@ class Arm:
 		self.nn=nn
 		self.color=color
 		self.size=Transform(nn)
-		self.segment_length=nn.val(segment_length).differentiable()
+		self.segment_length=segment_length
 		self.size.translate((0,self.segment_length))
 		self.rota=Transform(nn)
 		self.children=[]
-		self.angle=nn.val(0).differentiable()
+		self.angle=nn.val(0)
 
 	def setAngle(self,angle):
 		#nn=self.nn
 		self.angle.assign(angle)
 		self.rota.rotate(self.angle)
 
-	def draw(self,screen,center):
+	def draw(self,screen,center,id,tono=1):
 		b=self.matrix_multiplication(center,self.rota.matrix)
 		c= self.matrix_multiplication(b,self.size.matrix)
 		
 		self.x=c[0][2]
 		self.y=c[1][2]
 		
-		pygame.draw.line(screen, self.color, self._fromPoint(center), self._fromPoint(c) , 5)
+		pygame.draw.line(screen, (self.color[0]*tono,self.color[1]*tono,self.color[2]*tono), self._fromPoint(center,id), self._fromPoint(c,id) , 5)
 
 		for child in self.children:
-			child.draw(screen,c)
+			child.draw(screen,c,id,tono)
+
+		
 	
-	def _fromPoint(self,point):
-		return [point[0][2].value(0),point[1][2].value(0)]
+	def _fromPoint(self,point,id):
+		return [point[0][2].value(id),point[1][2].value(id)]
 
 	def matrix_multiplication(self,A, B):
 		if len(A[0]) != len(B):
@@ -104,15 +106,15 @@ class Arm:
 		self.children.append(child)
 
 
-class Clock:
+class RoboticArm:
 	def __init__(self, p):
 		self.p = p
-		nn=AutoFore(gradientes=6,variables=500)
+		nn=AutoFore(gradientes=6,variables=500,poblacion=2)
 
 		# Inicializar pygame
 		pygame.init()
 		screen = pygame.display.set_mode((p.width, p.height))
-		pygame.display.set_caption("Clock")
+		pygame.display.set_caption("Robotic Arm")
 
 
 		center=Transform(nn)
@@ -121,15 +123,22 @@ class Clock:
 		radio_ojo=100
 		focus_cam=(p.width,p.height//2)
 
-		a=Arm(p,nn,200,p.red)
-		a.setAngle(math.pi)
+		ma=nn.random(50,200).differentiable()
+		aa=nn.random(0,math.pi*2).differentiable()
+		md=nn.random(50,200).differentiable()
+		ad=nn.random(0,math.pi*2).differentiable()
+		mb=nn.random(50,200).differentiable()
+		ab=nn.random(0,math.pi*2).differentiable()
 
-		d=Arm(p,nn,100,p.green)
-		d.setAngle(math.pi/2)
+		a=Arm(p,nn,ma,p.red)
+		a.setAngle(aa)
+
+		d=Arm(p,nn,md,p.green)
+		d.setAngle(ad)
 		a.addChildren(d)
 
-		b=Arm(p,nn,50,p.blue)
-		b.setAngle(math.pi/2)
+		b=Arm(p,nn,mb,p.blue)
+		b.setAngle(ab)
 		d.addChildren(b)
 
 		
@@ -153,7 +162,8 @@ class Clock:
 
 			since=time.time()
 
-			a.draw(screen,center.matrix)
+			a.draw(screen,center.matrix,0,tono=1)
+			a.draw(screen,center.matrix,1,tono=0.5)
 
 			if focus_cam:
 				pygame.draw.circle(screen, p.black, focus_cam, 5)
@@ -176,6 +186,11 @@ class Clock:
 					# pendiente a ángulo
 					angle=m.atan()	
 					#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
+
+					#if c==a:
+					error=angle-angle.value(0)
+					error2=error*error
+					error2.error2Delta()
 
 					# calcula el vector normalizado focus->c
 					x_n=c.x.value(0)-focus_cam[0]
@@ -209,7 +224,7 @@ class Clock:
 					pygame.draw.line(screen, c.color, (x_n,y_n), end_point, 1)
 
 
-
+			nn.applyDelta(1)
 
 			if circle_position:
 				# halla el vector normalizado
@@ -236,7 +251,7 @@ class Clock:
 						producto_escalar=angle_velocity
 					if producto_escalar<-angle_velocity:
 						producto_escalar=-angle_velocity
-					c.setAngle(c.angle.value(0)+producto_escalar)
+					c.setAngle(c.angle+producto_escalar)
 
 				# calcula el tiempo que tardó
 				# end=time.time()
@@ -251,4 +266,4 @@ class Clock:
 		pygame.quit()
 
 if __name__ == '__main__':
-	Clock(Parameters())
+	RoboticArm(Parameters())

@@ -12,3 +12,5 @@ self.delta=np.zeros((self.poblacion,self.gradientes),dtype=np.float32)
 
 
 Hay un instrumento complejo, const que ha tenido que ser creado para el reciclaje de variables. Parece una constante, pero no es, una constante es algo que no cambia de valor, aquí una constante es algo que tiene una posición fija en memoria, es constante su puntero. Esta filosofía permite la reutilización de variables, dando una gestión muy eficaz de la memoria. A cambio de que el programador identifique que elementos se reutilizan o memorizan en ciertas estructuras.
+
+Assign usa el concepto de préstamo de variable cuando se usa entre variables diferenciadas. De esta forma se permite la inicialización random.
