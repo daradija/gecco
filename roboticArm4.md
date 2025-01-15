@@ -20,3 +20,8 @@
 nn.applyDelta(0.01)
 ```
 No se cambian los tamaños.
+
+segmentos como array
+ojos como array
+puntos continuos
+población

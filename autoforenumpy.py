@@ -40,13 +40,15 @@ class AutoFore:
 		self.g[id_var] = 0
 		
 	def sign(self,x):
-		return np.where(x > 0, 1, np.where(x < 0, -1, 0))
+		return np.where(x > 0, 1, np.where(x < 0, -1, 0))#+x
+		#return np.tanh(x)
 	
 	def applyDelta(self,epsilon):
 		for peso,id in enumerate(self.peso2id):
 			self.value[id]-=self.sign(self.delta[:,peso])*epsilon*np.abs(self.value[id])
 		self.delta=0
 
+	
 	def error2Delta(self,id):
 		self.delta += self.g[id]
 

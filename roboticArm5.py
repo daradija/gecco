@@ -105,6 +105,30 @@ class Arm:
 	def addChildren(self,child):
 		self.children.append(child)
 
+class Eye:
+	def __init__(self,screen,x,y):
+		self.screen=screen
+		self.radius = 100
+		self.focus=(x,y)
+
+	def draw(self):
+		black=(0,0,0)
+		pygame.draw.circle(self.screen, black, self.focus, 5)
+		pygame.draw.circle(self.screen, black, self.focus, self.radius, 1)
+
+	def error(self,c):
+		pygame.draw.line(self.screen,c.color,(c.x.value(0),c.y.value(0)),self.focus,1)
+		m=(c.y-self.focus[1])/(c.x-self.focus[0])
+		# pendiente a ángulo
+		angle=m.atan()	
+		#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
+
+		#if c==a:
+		error=angle-angle.value(0)
+		error2=error*error
+		error2.error2Delta()
+
+
 
 class RoboticArm:
 	def __init__(self, p):
@@ -120,8 +144,10 @@ class RoboticArm:
 		center=Transform(nn)
 		center.translate((nn.const(p.width//3),nn.const(p.height//2)))
 
-		radio_ojo=100
-		focus_cam=(p.width,p.height//2)
+		# radio_ojo=100
+		# focus_cam=(p.width,p.height//2)
+		eye1=Eye(screen,p.width,p.height//3)
+		eye2=Eye(screen,p.width,p.height//3*2)
 
 		ma=nn.random(50,200).differentiable()
 		aa=nn.random(0,math.pi*2).differentiable()
@@ -152,11 +178,7 @@ class RoboticArm:
 					running = False
 				elif event.type == pygame.MOUSEBUTTONDOWN:
 					click_x, click_y = event.pos
-
-					if focus_cam==None:
-						focus_cam=(click_x,click_y)
-					else:
-						circle_position = (click_x, click_y)  # Guardar posición del clic para dibujar el círculo
+					circle_position = (click_x, click_y)  # Guardar posición del clic para dibujar el círculo
 					
 			screen.fill(p.white)
 
@@ -165,10 +187,9 @@ class RoboticArm:
 			a.draw(screen,center.matrix,0,tono=1)
 			a.draw(screen,center.matrix,1,tono=0.5)
 
-			if focus_cam:
-				pygame.draw.circle(screen, p.black, focus_cam, 5)
-				pygame.draw.circle(screen, p.black, focus_cam, radio_ojo, 1)
-
+			eye1.draw()
+			eye2.draw()
+			
 			for c in [a,d,b]:
 				angle_grad_y=b.y.get(c.angle,0)
 				angle_grad_x=b.x.get(c.angle,0)
@@ -179,49 +200,51 @@ class RoboticArm:
 
 				#pygame.draw.line(screen, c.color, (b.x.value(0),b.y.value(0)), (b.x.value(0)+angle_grad_x/norm,b.y.value(0)+angle_grad_y/norm) , 1)
 
+				eye1.error(c)
+				eye2.error(c)
 
-				if focus_cam:
-					pygame.draw.line(screen,c.color,(c.x.value(0),c.y.value(0)),focus_cam,1)
-					m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
-					# pendiente a ángulo
-					angle=m.atan()	
-					#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
+				# if focus_cam:
+				# 	pygame.draw.line(screen,c.color,(c.x.value(0),c.y.value(0)),focus_cam,1)
+				# 	m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
+				# 	# pendiente a ángulo
+				# 	angle=m.atan()	
+				# 	#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
 
-					#if c==a:
-					error=angle-angle.value(0)
-					error2=error*error
-					error2.error2Delta()
+				# 	#if c==a:
+				# 	error=angle-angle.value(0)
+				# 	error2=error*error
+				# 	error2.error2Delta()
 
-					# calcula el vector normalizado focus->c
-					x_n=c.x.value(0)-focus_cam[0]
-					y_n=c.y.value(0)-focus_cam[1]
-					# Normaliza el vector
-					norm=math.sqrt(x_n**2+y_n**2)
-					x_n=x_n/norm*radio_ojo+focus_cam[0]
-					y_n=y_n/norm*radio_ojo+focus_cam[1]
+				# 	# calcula el vector normalizado focus->c
+				# 	x_n=c.x.value(0)-focus_cam[0]
+				# 	y_n=c.y.value(0)-focus_cam[1]
+				# 	# Normaliza el vector
+				# 	norm=math.sqrt(x_n**2+y_n**2)
+				# 	x_n=x_n/norm*radio_ojo+focus_cam[0]
+				# 	y_n=y_n/norm*radio_ojo+focus_cam[1]
 
 
-					# calcula el punto medio
-					#middle=((c.x.value(0)+focus_cam[0])//2,(c.y.value(0)+focus_cam[1])//2)
-					# draw a label m in the middle
-					# font = pygame.font.Font(None, 36)
-					# text = font.render(str(round(angle.value(0),2)), True, c.color)
-					# screen.blit(text, middle)
+				# 	# calcula el punto medio
+				# 	#middle=((c.x.value(0)+focus_cam[0])//2,(c.y.value(0)+focus_cam[1])//2)
+				# 	# draw a label m in the middle
+				# 	# font = pygame.font.Font(None, 36)
+				# 	# text = font.render(str(round(angle.value(0),2)), True, c.color)
+				# 	# screen.blit(text, middle)
 
-					derivate=angle.get(c.angle,0)*100
-					#derivate=angle.get(c.segment_length)*10000
+				# 	derivate=angle.get(c.angle,0)*100
+				# 	#derivate=angle.get(c.segment_length)*10000
 					
-					# draw a ortogonal line from the middle with module derivate
-					# Calcula el vector ortogonal (derivada perpendicular)
-					orthogonal_angle = angle.value(0) - math.pi / 2  # Ángulo perpendicular
-					length = derivate  # Longitud del vector ortogonal
-					end_point = (
-						x_n + length * math.cos(orthogonal_angle),
-						y_n + length * math.sin(orthogonal_angle)
-					)
+				# 	# draw a ortogonal line from the middle with module derivate
+				# 	# Calcula el vector ortogonal (derivada perpendicular)
+				# 	orthogonal_angle = angle.value(0) - math.pi / 2  # Ángulo perpendicular
+				# 	length = derivate  # Longitud del vector ortogonal
+				# 	end_point = (
+				# 		x_n + length * math.cos(orthogonal_angle),
+				# 		y_n + length * math.sin(orthogonal_angle)
+				# 	)
 					
-					# Dibuja la línea ortogonal desde el punto medio
-					pygame.draw.line(screen, c.color, (x_n,y_n), end_point, 1)
+				# 	# Dibuja la línea ortogonal desde el punto medio
+				# 	pygame.draw.line(screen, c.color, (x_n,y_n), end_point, 1)
 
 
 			nn.applyDelta(0.001)
