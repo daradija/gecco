@@ -5,3 +5,7 @@
 * Pasar a trabajar a overleaf con la plantilla.
 * Incluir estado del arte y abstract.
 * [Programar la calibración por cámaras](roboticArm4.md)
+
+
+# Ideas futuras
+* Evitar la colisión en la ruta: planificar la ruta, si hay una violación física, se identifican los elementos que la han producido y se halla otra ruta. La identificación puede ser como el aprendizaje por refuerzo. Identifica las últimas acciones por gradientes (media exponencial) y las evitas, generas cierta repursión. El efecto sería como soñar una pesadilla recurrente. 
