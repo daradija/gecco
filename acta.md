@@ -4,4 +4,4 @@
 * Reunión de seguimiento el jueves 16 de enero siguiente por la mañana.
 * Pasar a trabajar a overleaf con la plantilla.
 * Incluir estado del arte y abstract.
-* [Programar la calibración por cámaras](roboticArm2.md)
+* [Programar la calibración por cámaras](roboticArm4.md)
