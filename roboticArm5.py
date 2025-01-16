@@ -144,10 +144,12 @@ class RoboticArm:
 		center=Transform(nn)
 		center.translate((nn.const(p.width//3),nn.const(p.height//2)))
 
-		# radio_ojo=100
-		# focus_cam=(p.width,p.height//2)
-		eye1=Eye(screen,p.width,p.height//3)
-		eye2=Eye(screen,p.width,p.height//3*2)
+		eyes=[Eye(screen,p.width,p.height//3),Eye(screen,p.width,p.height//3*2)]
+		eyes=[Eye(screen,p.width,p.height//2)]
+
+		changePositionEach=200
+		round=0
+		learning_rate= 0.001
 
 		ma=nn.random(50,200).differentiable()
 		aa=nn.random(0,math.pi*2).differentiable()
@@ -180,6 +182,10 @@ class RoboticArm:
 					click_x, click_y = event.pos
 					circle_position = (click_x, click_y)  # Guardar posición del clic para dibujar el círculo
 					
+			round+=1
+			if round%changePositionEach==0:
+				circle_position = (nn.random(0,p.width).value(0),nn.random(0,p.height).value(0))
+
 			screen.fill(p.white)
 
 			since=time.time()
@@ -187,8 +193,8 @@ class RoboticArm:
 			a.draw(screen,center.matrix,0,tono=1)
 			a.draw(screen,center.matrix,1,tono=0.5)
 
-			eye1.draw()
-			eye2.draw()
+			for eye in eyes:
+				eye.draw()
 			
 			for c in [a,d,b]:
 				angle_grad_y=b.y.get(c.angle,0)
@@ -200,8 +206,8 @@ class RoboticArm:
 
 				#pygame.draw.line(screen, c.color, (b.x.value(0),b.y.value(0)), (b.x.value(0)+angle_grad_x/norm,b.y.value(0)+angle_grad_y/norm) , 1)
 
-				eye1.error(c)
-				eye2.error(c)
+				for eye in eyes:
+					eye.error(c)
 
 				# if focus_cam:
 				# 	pygame.draw.line(screen,c.color,(c.x.value(0),c.y.value(0)),focus_cam,1)
@@ -247,7 +253,7 @@ class RoboticArm:
 				# 	pygame.draw.line(screen, c.color, (x_n,y_n), end_point, 1)
 
 
-			nn.applyDelta(0.001)
+			nn.applyDelta(learning_rate)
 
 			if circle_position:
 				# halla el vector normalizado

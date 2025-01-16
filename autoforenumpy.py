@@ -46,11 +46,14 @@ class AutoFore:
 	def applyDelta(self,epsilon):
 		for peso,id in enumerate(self.peso2id):
 			self.value[id]-=self.sign(self.delta[:,peso])*epsilon*np.abs(self.value[id])
-		self.delta=0
+			#self.value[id]-=self.delta[:,peso]	*epsilon
+		self.delta[:,:]=0
 
 	
 	def error2Delta(self,id):
 		self.delta += self.g[id]
+		# for idx in range(self.value.shape[1]):
+		# 	self.delta[idx] += self.g[id,idx]*self.value[id,idx]
 
 
 	def mul(self,dest,src1,src2):
