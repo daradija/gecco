@@ -28,3 +28,10 @@ En comentario está la versión clásica.
 La tasa de aprendizaje o epsilon está en función del valor a corregir. De no ser así la amplitud tenía una corrección muy pequeña y la angular muy grande. Converge pero transcurre mucho tiempo.
 
 ![alt text](assets/Gifable-2025-01-16T07:46:39.gif)
+
+* Se incluye la capacidad de dibujar poblaciones mayores: poblacion=5
+
+* Se incluye la posibilidad de definir el número de segmentos: segments=4
+
+![alt text](assets/convergencia.png)
+Ejemplo de convergencia con 7 segmentos.

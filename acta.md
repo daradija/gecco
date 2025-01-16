@@ -8,5 +8,6 @@
 
 
 # Ideas futuras
+* Me queda por hacer la parte genética
 * Evitar la colisión en la ruta: planificar la ruta, si hay una violación física, se identifican los elementos que la han producido y se halla otra ruta. La identificación puede ser como el aprendizaje por refuerzo. Identifica las últimas acciones por gradientes (media exponencial) y las evitas, generas cierta repursión. El efecto sería como soñar una pesadilla recurrente. 
 * Las familias de GPU quedan invalidadas en cuestión del ciclo de vida de variables y su reutilización tras la últimas correcciones de las variables efectuadas en autoforenumpy. Tienen que copiar su forma de gestión.

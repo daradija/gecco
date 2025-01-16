@@ -6,6 +6,7 @@ import pygame
 import math
 from autoforenumpy import AutoFore
 import time
+import random
 
 class Parameters:
 	def __init__(self):
@@ -133,16 +134,10 @@ class Eye:
 class RoboticArm:
 	def __init__(self, p):
 		self.p = p
-		nn=AutoFore(gradientes=6,variables=500,poblacion=2)
-
-		# Inicializar pygame
+				# Inicializar pygame
 		pygame.init()
 		screen = pygame.display.set_mode((p.width, p.height))
 		pygame.display.set_caption("Robotic Arm")
-
-
-		center=Transform(nn)
-		center.translate((nn.const(p.width//3),nn.const(p.height//2)))
 
 		eyes=[Eye(screen,p.width,p.height//3),Eye(screen,p.width,p.height//3*2)]
 		eyes=[Eye(screen,p.width,p.height//2)]
@@ -150,24 +145,47 @@ class RoboticArm:
 		changePositionEach=200
 		round=0
 		learning_rate= 0.001
+		poblacion=5
+		segments=3
 
-		ma=nn.random(50,200).differentiable()
-		aa=nn.random(0,math.pi*2).differentiable()
-		md=nn.random(50,200).differentiable()
-		ad=nn.random(0,math.pi*2).differentiable()
-		mb=nn.random(50,200).differentiable()
-		ab=nn.random(0,math.pi*2).differentiable()
+		nn=AutoFore(gradientes=2*segments,variables=int(500/3*segments),poblacion=poblacion)
 
-		a=Arm(p,nn,ma,p.red)
-		a.setAngle(aa)
 
-		d=Arm(p,nn,md,p.green)
-		d.setAngle(ad)
-		a.addChildren(d)
 
-		b=Arm(p,nn,mb,p.blue)
-		b.setAngle(ab)
-		d.addChildren(b)
+		center=Transform(nn)
+		center.translate((nn.const(p.width//3),nn.const(p.height//2)))
+
+
+		arm=[]
+		for i in range(segments):
+			ma=nn.random(50,200).differentiable()
+			aa=nn.random(0,math.pi*2).differentiable()
+			color=(random.randint(0,255),random.randint(0,255),random.randint(0,255))
+			a=Arm(p,nn,ma,color)
+			a.setAngle(aa)
+			if len(arm)>0:
+				arm[-1].addChildren(a)
+			arm.append(a)		
+
+		a=arm[0]
+		b=arm[-1]
+		# ma=nn.random(50,200).differentiable()
+		# aa=nn.random(0,math.pi*2).differentiable()
+		# md=nn.random(50,200).differentiable()
+		# ad=nn.random(0,math.pi*2).differentiable()
+		# mb=nn.random(50,200).differentiable()
+		# ab=nn.random(0,math.pi*2).differentiable()
+
+		# a=Arm(p,nn,ma,p.red)
+		# a.setAngle(aa)
+
+		# d=Arm(p,nn,md,p.green)
+		# d.setAngle(ad)
+		# a.addChildren(d)
+
+		# b=Arm(p,nn,mb,p.blue)
+		# b.setAngle(ab)
+		# d.addChildren(b)
 
 		
 		circle_position = (100,100)
@@ -190,18 +208,20 @@ class RoboticArm:
 
 			since=time.time()
 
-			a.draw(screen,center.matrix,0,tono=1)
-			a.draw(screen,center.matrix,1,tono=0.5)
+			for pob in range(poblacion):
+				a.draw(screen,center.matrix,pob,tono=1 if pob==0 else 0.5)
 
 			for eye in eyes:
 				eye.draw()
 			
-			for c in [a,d,b]:
-				angle_grad_y=b.y.get(c.angle,0)
-				angle_grad_x=b.x.get(c.angle,0)
+			#for c in [a,d,b]:
+			# b=arm[-1]
+			for c in arm:
+				# angle_grad_y=b.y.get(c.angle,0)
+				# angle_grad_x=b.x.get(c.angle,0)
 
-				norm=math.sqrt(angle_grad_x**2+angle_grad_y**2)/20
-				norm=1
+				#norm=math.sqrt(angle_grad_x**2+angle_grad_y**2)/20
+				#norm=1
 				#print(angle_grad_x,angle_grad_y)
 
 				#pygame.draw.line(screen, c.color, (b.x.value(0),b.y.value(0)), (b.x.value(0)+angle_grad_x/norm,b.y.value(0)+angle_grad_y/norm) , 1)
@@ -269,7 +289,8 @@ class RoboticArm:
 				# calcula el producto escalar 
 				# mide el tiempo
 				# star=time.time()
-				for c in [a,d,b]:
+				#for c in [a,d,b]:
+				for c in arm:
 					angle_grad_y=b.y.get(c.angle,0)
 					angle_grad_x=b.x.get(c.angle,0)
 
