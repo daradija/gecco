@@ -7,6 +7,7 @@ import math
 from autoforenumpy import AutoFore
 import time
 import random
+import numpy as np
 
 class Parameters:
 	def __init__(self):
@@ -124,11 +125,9 @@ class Eye:
 		angle=m.atan()	
 		#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
 
-		#if c==a:
 		error=angle-angle.value(0)
-		error2=error*error
-		error2.error2Delta()
-
+		#error=angle.tanh()-np.tanh(angle.value(0))
+		return error
 
 
 class RoboticArm:
@@ -140,13 +139,13 @@ class RoboticArm:
 		pygame.display.set_caption("Robotic Arm")
 
 		eyes=[Eye(screen,p.width,p.height//3),Eye(screen,p.width,p.height//3*2)]
-		eyes=[Eye(screen,p.width,p.height//2)]
+		#eyes=[Eye(screen,p.width,p.height//2)]
 
 		changePositionEach=200
 		round=0
 		learning_rate= 0.001
-		poblacion=5
-		segments=7
+		poblacion=2
+		segments=5
 
 		nn=AutoFore(gradientes=2*segments,variables=int(500/3*segments),poblacion=poblacion)
 
@@ -169,27 +168,9 @@ class RoboticArm:
 
 		a=arm[0]
 		b=arm[-1]
-		# ma=nn.random(50,200).differentiable()
-		# aa=nn.random(0,math.pi*2).differentiable()
-		# md=nn.random(50,200).differentiable()
-		# ad=nn.random(0,math.pi*2).differentiable()
-		# mb=nn.random(50,200).differentiable()
-		# ab=nn.random(0,math.pi*2).differentiable()
-
-		# a=Arm(p,nn,ma,p.red)
-		# a.setAngle(aa)
-
-		# d=Arm(p,nn,md,p.green)
-		# d.setAngle(ad)
-		# a.addChildren(d)
-
-		# b=Arm(p,nn,mb,p.blue)
-		# b.setAngle(ab)
-		# d.addChildren(b)
-
 		
 		circle_position = (100,100)
-		
+		error=None
 
 		running = True
 		while running:
@@ -210,70 +191,25 @@ class RoboticArm:
 
 			for pob in range(poblacion):
 				a.draw(screen,center.matrix,pob,tono=1 if pob==0 else 0.5)
+				if not error is None:
+					error=error+0
 
 			for eye in eyes:
 				eye.draw()
 			
-			#for c in [a,d,b]:
-			# b=arm[-1]
 			for c in arm:
-				# angle_grad_y=b.y.get(c.angle,0)
-				# angle_grad_x=b.x.get(c.angle,0)
-
-				#norm=math.sqrt(angle_grad_x**2+angle_grad_y**2)/20
-				#norm=1
-				#print(angle_grad_x,angle_grad_y)
-
-				#pygame.draw.line(screen, c.color, (b.x.value(0),b.y.value(0)), (b.x.value(0)+angle_grad_x/norm,b.y.value(0)+angle_grad_y/norm) , 1)
-
 				for eye in eyes:
-					eye.error(c)
-
-				# if focus_cam:
-				# 	pygame.draw.line(screen,c.color,(c.x.value(0),c.y.value(0)),focus_cam,1)
-				# 	m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
-				# 	# pendiente a ángulo
-				# 	angle=m.atan()	
-				# 	#angle=math.atan2(c.y.value(0)-focus_cam[1],c.x.value(0)-focus_cam[0])
-
-				# 	#if c==a:
-				# 	error=angle-angle.value(0)
-				# 	error2=error*error
-				# 	error2.error2Delta()
-
-				# 	# calcula el vector normalizado focus->c
-				# 	x_n=c.x.value(0)-focus_cam[0]
-				# 	y_n=c.y.value(0)-focus_cam[1]
-				# 	# Normaliza el vector
-				# 	norm=math.sqrt(x_n**2+y_n**2)
-				# 	x_n=x_n/norm*radio_ojo+focus_cam[0]
-				# 	y_n=y_n/norm*radio_ojo+focus_cam[1]
-
-
-				# 	# calcula el punto medio
-				# 	#middle=((c.x.value(0)+focus_cam[0])//2,(c.y.value(0)+focus_cam[1])//2)
-				# 	# draw a label m in the middle
-				# 	# font = pygame.font.Font(None, 36)
-				# 	# text = font.render(str(round(angle.value(0),2)), True, c.color)
-				# 	# screen.blit(text, middle)
-
-				# 	derivate=angle.get(c.angle,0)*100
-				# 	#derivate=angle.get(c.segment_length)*10000
-					
-				# 	# draw a ortogonal line from the middle with module derivate
-				# 	# Calcula el vector ortogonal (derivada perpendicular)
-				# 	orthogonal_angle = angle.value(0) - math.pi / 2  # Ángulo perpendicular
-				# 	length = derivate  # Longitud del vector ortogonal
-				# 	end_point = (
-				# 		x_n + length * math.cos(orthogonal_angle),
-				# 		y_n + length * math.sin(orthogonal_angle)
-				# 	)
-					
-				# 	# Dibuja la línea ortogonal desde el punto medio
-				# 	pygame.draw.line(screen, c.color, (x_n,y_n), end_point, 1)
-
-
+					errorAux=eye.error(c)
+					error2=errorAux*errorAux
+					error2.error2Delta()
+					if error is None:
+						error=error2
+					else:
+						error+=error2
 			nn.applyDelta(learning_rate)
+			if round%changePositionEach==0:
+				#error.geneticAlgorithm()
+				error=None
 
 			if circle_position:
 				# halla el vector normalizado
@@ -287,9 +223,6 @@ class RoboticArm:
 				#pygame.draw.line(screen, p.black, (b.x.value(0),b.y.value(0)), (b.x.value(0)+x_n*30,b.y.value(0)+y_n*30) , 1)
 
 				# calcula el producto escalar 
-				# mide el tiempo
-				# star=time.time()
-				#for c in [a,d,b]:
 				for c in arm:
 					angle_grad_y=b.y.get(c.angle,0)
 					angle_grad_x=b.x.get(c.angle,0)
@@ -303,9 +236,6 @@ class RoboticArm:
 						producto_escalar=-angle_velocity
 					c.setAngle(c.angle+producto_escalar)
 
-				# calcula el tiempo que tardó
-				# end=time.time()
-				# print(end-star)
 				pygame.draw.circle(screen, p.black, circle_position, p.circle_radius)
 
 			print("Tiempo:",time.time()-since)

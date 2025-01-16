@@ -8,6 +8,7 @@
 
 
 # Ideas futuras
-* Me queda por hacer la parte genética
+* La corrección con tanh como etapa de activación no funciona. Lo que hace sospechar que las correcciones son mera información de signos. Supone un curioso acercamiento a las funciones de spike. A una versión con potenciales positivos y negativos.
+* Si el orden de visión no es el percibido, hay un fragmento que solapa a otro o viceversa, se puede ejercer una fuerza correctiva y corregir mediante el gradiente los parámetros. Es un ejemplo dinámico de que no hace falta grafo por usar el modo forward. 
 * Evitar la colisión en la ruta: planificar la ruta, si hay una violación física, se identifican los elementos que la han producido y se halla otra ruta. La identificación puede ser como el aprendizaje por refuerzo. Identifica las últimas acciones por gradientes (media exponencial) y las evitas, generas cierta repursión. El efecto sería como soñar una pesadilla recurrente. 
 * Las familias de GPU quedan invalidadas en cuestión del ciclo de vida de variables y su reutilización tras la últimas correcciones de las variables efectuadas en autoforenumpy. Tienen que copiar su forma de gestión.

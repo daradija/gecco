@@ -27,6 +27,8 @@ def applyDelta(self,epsilon):
 En comentario está la versión clásica.
 La tasa de aprendizaje o epsilon está en función del valor a corregir. De no ser así la amplitud tenía una corrección muy pequeña y la angular muy grande. Converge pero transcurre mucho tiempo.
 
+tanh sería conveniente aplicarlo en la salida, pero por razones físicas no se puede aplicar la función de activación ya que necesitamos que sean ángulos para compararlas con el sistema visual. Digamos que de un ángulo dado por el sistema visual puedo averiguar el error... SI SE PUEDE. Lo abordo en roboticArm6.
+
 ![alt text](assets/Gifable-2025-01-16T07:46:39.gif)
 
 * Se incluye la capacidad de dibujar poblaciones mayores: poblacion=5

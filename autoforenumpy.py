@@ -84,6 +84,11 @@ class AutoFore:
 		self.value[dest] = np.arctan(self.value[src])
 		for idx in range(self.value.shape[1]):
 			self.g[dest, idx] = 1/(1+self.value[src, idx]**2)*self.g[src, idx]
+
+	def tanh(self,dest,src):
+		self.value[dest] = np.tanh(self.value[src])
+		for idx in range(self.value.shape[1]):
+			self.g[dest, idx] = (1-self.value[dest, idx]**2)*self.g[src, idx]
 	
 	def sin(self,dest,src):
 		self.value[dest] = np.sin(self.value[src])
@@ -188,7 +193,7 @@ class AutoFore:
 		#v.forward=[0]*len(self.var2id)
 		return v
 	
-
+	
 
 # @cuda.jit
 # def af_assing(matrix, row_idx, new_row, g, id):
@@ -232,6 +237,29 @@ class Variable:
 			print("id",self.id2)
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
+
+	def geneticAlgorithm(self,kill=0.5):
+		self.id2
+		self.nn.value
+		# clone variable
+		clon=self.nn.value[self.id2].copy()
+		# remove 0 index
+		clon=clon[1:]
+		# create sort index
+		index=np.argsort(clon)+1
+
+		parents=index[:int(len(index)*kill)]
+		children=index[int(len(index)*(1-kill)):]
+
+		for id in children:
+			father=random.choice(parents)
+			mother=random.choice(parents)
+			for id2 in self.nn.peso2id:
+				if random.random()<0.5:
+					self.nn.value[id2][id]=self.nn.value[id2][father]
+				else:
+					self.nn.value[id2][id]=self.nn.value[id2][mother]
+
 
 	def checkFirma(self):
 		if self.firma!=self.nn.firma[self.id2]:
@@ -418,6 +446,11 @@ class Variable:
 		self.nn.atan(v.id2,self.id2)
 		return v
 
+	def tanh(self):
+		self.checkFirma()
+		v=self.nn.midVar()
+		self.nn.tanh(v.id2,self.id2)
+		return v
 
 	def sigmoid(self):
 		self.checkFirma()
