@@ -53,10 +53,10 @@ class Transform:
 		]
 
 class Arm:
-	def __init__(self,p,nn,segment_length,color):
+	def __init__(self,p,nn,segment_length):
 		self.p=p
 		self.nn=nn
-		self.color=color
+		#self.color=color
 		self.size=Transform(nn)
 		self.segment_length=segment_length
 		self.size.translate((0,self.segment_length))
@@ -69,22 +69,30 @@ class Arm:
 		self.angle.assign(angle)
 		self.rota.rotate(self.angle)
 
-	def draw(self,screen,center,id,tono=1):
+	def draw(self,screen,center,id,color):
 		b=self.matrix_multiplication(center,self.rota.matrix)
 		c= self.matrix_multiplication(b,self.size.matrix)
 		
 		self.x=c[0][2]
 		self.y=c[1][2]
 		
-		pygame.draw.line(screen, (self.color[0]*tono,self.color[1]*tono,self.color[2]*tono), self._fromPoint(center,id), self._fromPoint(c,id) , 5)
+		pygame.draw.line(screen, color, self._fromPoint(center,id), self._fromPoint(c,id) , 5)
 
 		for child in self.children:
-			child.draw(screen,c,id,tono)
+			child.draw(screen,c,id,color)
 
 		
 	
 	def _fromPoint(self,point,id):
-		return [point[0][2].value(id),point[1][2].value(id)]
+		x=point[0][2].value(id)
+		y=point[1][2].value(id)
+		inicial=100
+		altura=inicial-5*id
+		# for i in range(id):
+		# 	altura/=2
+		#self.p.width
+		#self.p.height
+		return (x+inicial-altura,y-inicial+altura)
 
 	def matrix_multiplication(self,A, B):
 		if len(A[0]) != len(B):
@@ -119,7 +127,8 @@ class Eye:
 		pygame.draw.circle(self.screen, black, self.focus, self.radius, 1)
 
 	def error(self,c):
-		pygame.draw.line(self.screen,c.color,(c.x.value(0),c.y.value(0)),self.focus,1)
+		blue=(0,0,255)
+		pygame.draw.line(self.screen,blue,(c.x.value(0),c.y.value(0)),self.focus,1)
 		m=(c.y-self.focus[1])/(c.x-self.focus[0])
 		# pendiente a ángulo
 		angle=m.atan()	
@@ -138,29 +147,29 @@ class RoboticArm:
 		screen = pygame.display.set_mode((p.width, p.height))
 		pygame.display.set_caption("Robotic Arm")
 
-		eyes=[Eye(screen,p.width,p.height//3),Eye(screen,p.width,p.height//3*2)]
-		#eyes=[Eye(screen,p.width,p.height//2)]
+		#eyes=[Eye(screen,p.width,p.height//3),Eye(screen,p.width,p.height//3*2)]
+		eyes=[Eye(screen,p.width,p.height//2)]
 
-		changePositionEach=200
+		changePositionEach=100
 		round=0
-		learning_rate= 0.001
-		poblacion=2
-		segments=5
+		poblacion=10
+		segments=3
 
-		nn=AutoFore(gradientes=2*segments,variables=int(500/3*segments),poblacion=poblacion)
+		nn=AutoFore(gradientes=2*segments+1,variables=int(500/3*segments),poblacion=poblacion)
 
 
 
 		center=Transform(nn)
 		center.translate((nn.const(p.width//3),nn.const(p.height//2)))
 
+		learning_rate=nn.random(0.001,0.001).differentiable()
 
 		arm=[]
 		for i in range(segments):
 			ma=nn.random(50,200).differentiable()
 			aa=nn.random(0,math.pi*2).differentiable()
 			color=(random.randint(0,255),random.randint(0,255),random.randint(0,255))
-			a=Arm(p,nn,ma,color)
+			a=Arm(p,nn,ma)
 			a.setAngle(aa)
 			if len(arm)>0:
 				arm[-1].addChildren(a)
@@ -173,6 +182,7 @@ class RoboticArm:
 		error=None
 
 		running = True
+		willDie=[]
 		while running:
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
@@ -189,26 +199,35 @@ class RoboticArm:
 
 			since=time.time()
 
-			for pob in range(poblacion):
-				a.draw(screen,center.matrix,pob,tono=1 if pob==0 else 0.5)
+			for pob in range(poblacion-1,-1,-1):
+				if pob in willDie:
+					color=p.red
+				else:
+					color=p.green
+				if pob==0:
+					color=p.blue
+				a.draw(screen,center.matrix,pob,color=color)
 				if not error is None:
 					error=error+0
 
 			for eye in eyes:
 				eye.draw()
 			
+			suberror=nn.val(0)
 			for c in arm:
 				for eye in eyes:
 					errorAux=eye.error(c)
 					error2=errorAux*errorAux
+					suberror+=error2
 					error2.error2Delta()
-					if error is None:
-						error=error2
-					else:
-						error+=error2
-			nn.applyDelta(learning_rate)
-			if round%changePositionEach==0:
-				#error.geneticAlgorithm()
+			if error is None:
+				error=suberror
+			else:
+				error+=suberror
+			nn.applyDelta(learning_rate,suberror.id2)
+			doit=round%changePositionEach==0
+			willDie=error.geneticAlgorithm(kill=0.5, doit=doit)
+			if doit:
 				error=None
 
 			if circle_position:

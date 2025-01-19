@@ -42,3 +42,12 @@ Devuelva el error y computar fuera la suma de los errores. Es mas correcto.
     error=angle.tanh()-math.tanh(angle.value(0))
 ```
 En el acta dejo anotada una linea de trabajo futura.
+
+# Representación gráfica 
+Se dibujan los brazos en distintas posiciones para poderlos ver.
+Se utiliza el color rojo para identificar los peores candidatos, que morirán.
+En verde los mejores y en azul la referencia.
+
+# 
+Actualización según el random.
+cada individuo tiene una tasa de actualización diferente.

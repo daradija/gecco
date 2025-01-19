@@ -31,6 +31,8 @@ class AutoFore:
 		self.peso2id=np.zeros(self.gradientes,dtype=np.int16) # indica el id de la variable que es el peso
 
 		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float32)
+		self.valueFrom=np.zeros((self.variables,self.poblacion),dtype=np.float32)
+		self.valueTo=np.zeros((self.variables,self.poblacion),dtype=np.float32)
 		self.delta=np.zeros((self.poblacion,self.gradientes),dtype=np.float32)
 		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float32)
 		self.prohibitedConst=False
@@ -43,17 +45,36 @@ class AutoFore:
 		return np.where(x > 0, 1, np.where(x < 0, -1, 0))#+x
 		#return np.tanh(x)
 	
-	def applyDelta(self,epsilon):
+	def applyDelta(self,epsilon,id):
+		ep=self.value[id]/len(self.peso2id)
 		for peso,id in enumerate(self.peso2id):
-			self.value[id]-=self.sign(self.delta[:,peso])*epsilon*np.abs(self.value[id])
+			#mid=(self.valueTo[id]+self.valueFrom[id])/2
+			#cte=self.sign(self.delta[:,peso])*np.abs(mid)
+			cte=self.sign(self.delta[:,peso])*np.abs(self.value[id])
+			
+			#cte=self.delta[:,peso]
+			#self.g[id,:,epsilon.idPeso]=cte
+
+			#self.value[id]-=self.value[epsilon.id2]*cte
+			self.value[id]-=ep*cte
+
+			# valid_range = ~((self.valueFrom[id] == 0) & (self.valueTo[id] == 0))
+			# self.value[id][valid_range] = np.clip(
+			# 	self.value[id][valid_range], 
+			# 	self.valueFrom[id][valid_range], 
+			# 	self.valueTo[id][valid_range]
+			# )
 			#self.value[id]-=self.delta[:,peso]	*epsilon
+		print(self.value[epsilon.id2])
 		self.delta[:,:]=0
 
 	
 	def error2Delta(self,id):
 		self.delta += self.g[id]
 		# for idx in range(self.value.shape[1]):
-		# 	self.delta[idx] += self.g[id,idx]*self.value[id,idx]
+		# 	if self.g[id,idx,0]==0:
+		# 		continue
+		# 	self.delta[idx] += self.value[id,idx]/self.g[id,idx]
 
 
 	def mul(self,dest,src1,src2):
@@ -173,6 +194,8 @@ class AutoFore:
 		v=Variable(self)
 		dados=np.random.uniform(valueFrom,valueTo,self.poblacion).astype(np.float32)
 		self.assign2(v.id2,dados)
+		self.valueTo[v.id2]=valueTo
+		self.valueFrom[v.id2]=valueFrom
 		return v
 	
 	def param(self,valueFrom, valueTo):
@@ -238,7 +261,7 @@ class Variable:
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
 
-	def geneticAlgorithm(self,kill=0.5):
+	def geneticAlgorithm(self,kill=0.5,doit=False):
 		self.id2
 		self.nn.value
 		# clone variable
@@ -248,17 +271,22 @@ class Variable:
 		# create sort index
 		index=np.argsort(clon)+1
 
-		parents=index[:int(len(index)*kill)]
+		parents=index[:int(len(index)*(1-kill))]
 		children=index[int(len(index)*(1-kill)):]
 
-		for id in children:
-			father=random.choice(parents)
-			mother=random.choice(parents)
-			for id2 in self.nn.peso2id:
-				if random.random()<0.5:
-					self.nn.value[id2][id]=self.nn.value[id2][father]
-				else:
-					self.nn.value[id2][id]=self.nn.value[id2][mother]
+		if len(parents)==0 or len(children)==0:
+			return []
+
+		if doit:
+			for id in children:
+				father=random.choice(parents)
+				mother=random.choice(parents)
+				for id2 in self.nn.peso2id:
+					if random.random()<0.5:
+						self.nn.value[id2][id]=self.nn.value[id2][father]
+					else:
+						self.nn.value[id2][id]=self.nn.value[id2][mother]
+		return children
 
 
 	def checkFirma(self):
