@@ -45,3 +45,5 @@ Hay una mejora que se puede aplicar que es hacer desaparecer delta. En concreto 
 Se dejan las trazas y se deja la versión con convergencia rápida y como puede observarse hay poca diversidad.
 
 Se pasa a una nueva versión tnato de roboticArm6 como de autoforenumpy y en ella se expone la nueva idea.
+
+Nótese: De que el ajuste por intervalos (mínimo máximo del random) no ha ido muy bien y que el ángulo del brazo robótico se mueva mas o menos rápido para ciertos valores altos es algo que no me gusta, aunqeu soluciona el problema.
