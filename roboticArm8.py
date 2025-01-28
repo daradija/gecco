@@ -247,7 +247,8 @@ class RoboticArm:
 			if ronda%p.checkExitEach==0:
 				minId=error.minId()
 				minErrorPerSegment=error.value(minId)/segments
-				print("Time:",round(time.time()-since,2),"Rounds:",ronda,"Segment Error:",minErrorPerSegment)
+				print("Segments:",segments,"Population:",pulation,"Seed:",p.random_seed,"Time:",round(time.time()-since,2),"Rounds:",ronda,"Segment Error:",minErrorPerSegment)
+				#print( "Time:",round(time.time()-since,2),"Rounds:",ronda,"Segment Error:",minErrorPerSegment)
 				if minErrorPerSegment<p.convergence:
 					self.time=time.time()-since
 					self.rounds=ronda
@@ -408,9 +409,9 @@ if __name__ == '__main__':
 	num_cpus = os.cpu_count()
 
 	# Crear un rango de valores para population
-	populations = range(2, 51)
+	populations = range(2, 13)
 	segments = range(1, 7)
-	seeds=[123,456,789,12,345,678,901]
+	seeds=[123] #,456,789,12,345,678,901]
 
 	# populations = range(2, 4)
 	# segments = range(1, 3)
@@ -419,7 +420,7 @@ if __name__ == '__main__':
 	# Generar todas las combinaciones de parámetros
 	parameter_combinations = list(itertools.product(populations, segments, seeds))
 
-	RoboticArm(Parameters(graphic=True, population=10, segments=3, seed=123))
+	#RoboticArm(Parameters(graphic=True, population=10, segments=3, seed=123))
 
 	# Ejecutar en paralelo con todos los núcleos disponibles
 	results = []

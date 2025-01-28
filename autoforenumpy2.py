@@ -41,7 +41,7 @@ class AutoFore:
 		# if seed!=0:
 		self.seeder()
 		#random.seed(self.seed.randint())
-		self.learning_rate = (np.random.random((self.gradientes,self.poblacion)) * (1 - 0.00001) + 0.00001).astype(np.float32)
+		self.learning_rate = (np.random.random((self.gradientes,self.poblacion)) * (0.01 - 0.00001) + 0.00001).astype(np.float32)
 
 	def seeder(self):
 		np.random.seed(self.seed.randint(0,2**32-1))
@@ -285,7 +285,7 @@ class Variable:
 		#ep=self.nn.value[self.id2]/len(self.nn.peso2id)
 		for peso,id in enumerate(self.nn.peso2id):
 			#cte=self.nn.sign(self.nn.g[self.id2,:,peso])*np.abs(self.nn.value[id]) 
-			cte=self.nn.g[self.id2,:,peso]
+			cte=self.nn.g[self.id2,:,peso]*np.abs(self.nn.value[id]) 
 			# _var pob _gra * _var pob		
 			if cte[0]!=0:
 				print(self.nn.g[self.id2,0,peso])
@@ -336,7 +336,7 @@ class Variable:
 						self.nn.value[id2,id]=self.nn.value[id2,mother]
 					self.nn.seeder()
 					if np.random.random()<mutate:
-						self.nn.learning_rate[peso,id]=np.random.uniform(0.00001,1)
+						self.nn.learning_rate[peso,id]=np.random.uniform(0.00001,0.01)
 					else:
 						if np.random.random()<0.5:
 							self.nn.learning_rate[peso,id]=self.nn.learning_rate[peso,father]#*np.random.uniform(0.9,1.1)
