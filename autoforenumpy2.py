@@ -10,14 +10,14 @@ import time
 
 # Es una copia de dinamic_prunning_in_forward_mode2
 
-import random,math,time
+import math,time
 import numpy as np
 from autofore import ejemplo_red_neuronal_polinomios
 
 
 
 class AutoFore:
-	def __init__(self,gaf=None,pruning=0,variables=20,gradientes=8,poblacion=128*10):
+	def __init__(self,gaf=None,pruning=0,variables=20,gradientes=8,poblacion=128*10,seed=0):
 		self.variables=variables # en función de la memoria
 		self.poblacion=poblacion # en función de la gpu
 		self.gradientes=gradientes # número de variables, las menos significativas seran eliminadas
@@ -31,13 +31,21 @@ class AutoFore:
 		self.peso2id=np.zeros(self.gradientes,dtype=np.int16) # indica el id de la variable que es el peso
 
 		self.value=np.zeros((self.variables,self.poblacion),dtype=np.float32)
-		self.valueFrom=np.zeros((self.variables,self.poblacion),dtype=np.float32)
-		self.valueTo=np.zeros((self.variables,self.poblacion),dtype=np.float32)
+		self.valueFrom=np.zeros(self.variables,dtype=np.float32)
+		self.valueTo=np.zeros(self.variables,dtype=np.float32)
 		self.g=np.zeros((self.variables,self.poblacion,self.gradientes),dtype=np.float32)
 		self.prohibitedConst=False
-		self.learning_rate = (np.random.random((self.gradientes,self.poblacion)) * (0.01 - 0.0001) + 0.0001).astype(np.float32)
 
-	
+
+		self.seed=seed
+		# if seed!=0:
+		self.seeder()
+		#random.seed(self.seed.randint())
+		self.learning_rate = (np.random.random((self.gradientes,self.poblacion)) * (1 - 0.00001) + 0.00001).astype(np.float32)
+
+	def seeder(self):
+		np.random.seed(self.seed.randint(0,2**32-1))
+
 	def assign2(self,id_var,v2):	
 		self.value[id_var] = v2
 		self.g[id_var] = 0
@@ -51,13 +59,28 @@ class AutoFore:
 	def mul(self,dest,src1,src2):
 		self.value[dest] = self.value[src1] * self.value[src2] #
 		
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = self.g[src1, idx]*self.value[src2, idx]+self.g[src2, idx]*self.value[src1, idx] #
+		# for idx in range(self.value.shape[1]):
+		# 	self.g[dest, idx] = self.g[src1, idx]*self.value[src2, idx]+self.g[src2, idx]*self.value[src1, idx] #
 
-	def div(self,dest,src1,src2):
+		self.g[dest, :,:] = (
+				self.g[src1, :,:] * self.value[src2, :,np.newaxis] +
+				self.g[src2, :,:] * self.value[src1, :,np.newaxis]
+		)
+
+	def div(self, dest, src1, src2):
+		# División elemento a elemento en self.value (2D)
 		self.value[dest] = self.value[src1] / self.value[src2]
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = self.g[src1, idx]/self.value[src2, idx]-self.value[src1, idx]*self.g[src2, idx]/(self.value[src2, idx]**2)
+
+		# for idx in range(self.value.shape[1]):
+		# 	self.g[dest, idx] = self.g[src1, idx]/self.value[src2, idx]-self.value[src1, idx]*self.g[src2, idx]/(self.value[src2, idx]**2)
+
+		# Actualización de gradientes en self.g (3D)
+		self.g[dest, :, :] = (
+			self.g[src1, :, :] / self.value[src2, :, np.newaxis] -
+			(self.value[src1, :, np.newaxis] * self.g[src2, :, :]) /
+			(self.value[src2, :, np.newaxis] ** 2)
+		)
+
 
 	def add(self,dest,src1,src2):
 		self.value[dest] = self.value[src1] + self.value[src2]
@@ -67,25 +90,61 @@ class AutoFore:
 		self.value[dest] = self.value[src1] - self.value[src2]	
 		self.g[dest] = self.g[src1] - self.g[src2]
 
-	def cos(self,dest,src):
+	# def cos(self,dest,src):
+	# 	self.value[dest] = np.cos(self.value[src])
+	# 	for idx in range(self.value.shape[1]):
+	# 		self.g[dest, idx] = -np.sin(self.value[src, idx])*self.g[src, idx]
+
+	def cos(self, dest, src):
+		# Calcular el coseno para value (2D)
 		self.value[dest] = np.cos(self.value[src])
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = -np.sin(self.value[src, idx])*self.g[src, idx]
 
-	def atan(self,dest,src):
+		# Actualizar el gradiente (3D)
+		self.g[dest, :, :] = -np.sin(self.value[src, :, np.newaxis]) * self.g[src, :, :]
+			
+
+	# def atan(self,dest,src):
+	# 	self.value[dest] = np.arctan(self.value[src])
+	# 	for idx in range(self.value.shape[1]):
+	# 		self.g[dest, idx] = 1/(1+self.value[src, idx]**2)*self.g[src, idx]
+
+	def atan(self, dest, src):
+		# Calcular la arctangente para value (2D)
 		self.value[dest] = np.arctan(self.value[src])
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = 1/(1+self.value[src, idx]**2)*self.g[src, idx]
 
-	def tanh(self,dest,src):
+		# Actualizar el gradiente (3D)
+		self.g[dest, :, :] = (
+			1 / (1 + self.value[src, :, np.newaxis] ** 2) * self.g[src, :, :]
+		)
+
+
+	# def tanh(self,dest,src):
+	# 	self.value[dest] = np.tanh(self.value[src])
+	# 	for idx in range(self.value.shape[1]):
+	# 		self.g[dest, idx] = (1-self.value[dest, idx]**2)*self.g[src, idx]
+
+	def tanh(self, dest, src):
+		# Calcular la tangente hiperbólica para value (2D)
 		self.value[dest] = np.tanh(self.value[src])
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = (1-self.value[dest, idx]**2)*self.g[src, idx]
-	
-	def sin(self,dest,src):
+
+		# Actualizar el gradiente (3D)
+		self.g[dest, :, :] = (
+			(1 - self.value[dest, :, np.newaxis] ** 2) * self.g[src, :, :]
+		)
+
+	# def sin(self,dest,src):
+	# 	self.value[dest] = np.sin(self.value[src])
+	# 	for idx in range(self.value.shape[1]):
+	# 		self.g[dest, idx] = np.cos(self.value[src, idx])*self.g[src, idx]
+
+	def sin(self, dest, src):
+		# Calcular el seno para value (2D)
 		self.value[dest] = np.sin(self.value[src])
-		for idx in range(self.value.shape[1]):
-			self.g[dest, idx] = np.cos(self.value[src, idx])*self.g[src, idx]
+
+		# Actualizar el gradiente (3D)
+		self.g[dest, :, :] = np.cos(self.value[src, :, np.newaxis]) * self.g[src, :, :]
+
+
 
 	def neg(self,dest,src):
 		self.value[dest] = -self.value[src]
@@ -151,6 +210,7 @@ class AutoFore:
 	
 	def random(self,valueFrom,valueTo):
 		v=Variable(self)
+		self.seeder()
 		dados=np.random.uniform(valueFrom,valueTo,self.poblacion).astype(np.float32)
 		self.assign2(v.id2,dados)
 		self.valueTo[v.id2]=valueTo
@@ -215,15 +275,17 @@ class Variable:
 		# else:
 		# 	nn.nextVar+=1
 		#nn.referencia[self.id2]=nn.operacion
-		if self.id2==22:
-			print("id",self.id2)
+		# if self.id2==22:
+		# 	print("id",self.id2)
+		self.nn.seeder()
 		self.firma=np.random.randint(0, 2**16)
 		nn.firma[self.id2]=self.firma
 
 	def learn(self):
 		#ep=self.nn.value[self.id2]/len(self.nn.peso2id)
 		for peso,id in enumerate(self.nn.peso2id):
-			cte=self.nn.sign(self.nn.g[self.id2,:,peso])*np.abs(self.nn.value[id]) 
+			#cte=self.nn.sign(self.nn.g[self.id2,:,peso])*np.abs(self.nn.value[id]) 
+			cte=self.nn.g[self.id2,:,peso]
 			# _var pob _gra * _var pob		
 			if cte[0]!=0:
 				print(self.nn.g[self.id2,0,peso])
@@ -232,8 +294,15 @@ class Variable:
 			epsilon=self.nn.learning_rate[peso]
 			self.nn.value[id]-=epsilon*cte
 
+			self.nn.value[id] = np.where(
+				self.nn.valueFrom[id] != self.nn.valueTo[id],
+				np.clip(self.nn.value[id], self.nn.valueFrom[id], self.nn.valueTo[id]),
+				self.nn.value[id]
+			)
 
-	def geneticAlgorithm(self,killdown=1,doit=False):
+
+
+	def geneticAlgorithm(self,killdown=1,doit=False,mutate=0.2):
 		self.id2
 		self.nn.value
 		# clone variable
@@ -252,18 +321,27 @@ class Variable:
 		if doit:
 			for id in children:
 				father=parents[0]
-				mother=random.choice(parents)
+				self.nn.seeder()
+				mother=np.random.choice(parents)
+				#mother=father
 				for peso,id2 in enumerate(self.nn.peso2id):
-					if random.random()<0.5:
+					self.nn.seeder()
+					# if np.random.random()<mutate and self.nn.valueFrom[id2]!=self.nn.valueTo[id2]:
+					# 	self.nn.value[id2,id]=np.random.uniform(self.nn.valueFrom[id2],self.nn.valueTo[id2])
+					# else:
+					if np.random.random()<0.5:
 						self.nn.value[id2,id]=self.nn.value[id2,father]
 						# _gra pob 
 					else:
 						self.nn.value[id2,id]=self.nn.value[id2,mother]
-					if random.random()<0.5:
-						self.nn.learning_rate[peso,id]=self.nn.learning_rate[peso,father]*random.uniform(0.9,1.1)
-						# _gra pob 
+					self.nn.seeder()
+					if np.random.random()<mutate:
+						self.nn.learning_rate[peso,id]=np.random.uniform(0.00001,1)
 					else:
-						self.nn.learning_rate[peso,id]=self.nn.learning_rate[peso,mother]*random.uniform(0.9,1.1)
+						if np.random.random()<0.5:
+							self.nn.learning_rate[peso,id]=self.nn.learning_rate[peso,father]#*np.random.uniform(0.9,1.1)
+						else:
+							self.nn.learning_rate[peso,id]=self.nn.learning_rate[peso,mother]#*np.random.uniform(0.9,1.1)
 				
 		return children
 
@@ -291,9 +369,9 @@ class Variable:
 	
 	def minId(self):
 		#fuera=Dentro("minId")
-		i=0
+		i=1
 		min=self.nn.value[self.id2,0]
-		for j in range(1,self.nn.poblacion):
+		for j in range(2,self.nn.poblacion):
 			if self.nn.value[self.id2,j]<min:
 				min=self.nn.value[self.id2,j]
 				i=j

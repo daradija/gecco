@@ -152,8 +152,8 @@ class RoboticArm:
 
 		changePositionEach=100
 		round=0
-		poblacion=10
-		segments=3
+		poblacion=2
+		segments=5
 
 		nn=AutoFore(gradientes=2*segments+1,variables=int(500/3*segments),poblacion=poblacion)
 
