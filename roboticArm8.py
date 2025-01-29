@@ -409,9 +409,9 @@ if __name__ == '__main__':
 	num_cpus = os.cpu_count()
 
 	# Crear un rango de valores para population
-	populations = range(2, 13)
+	populations = range(2, 7)
 	segments = range(1, 7)
-	seeds=[123] #,456,789,12,345,678,901]
+	seeds=[123,456,789]
 
 	# populations = range(2, 4)
 	# segments = range(1, 3)
