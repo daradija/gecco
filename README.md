@@ -6,7 +6,7 @@ The main files are:
 * [roboticArm8.py](roboticArm8.py)
 * [autoforenumpy.py](autoforenumpy.py)
 
-Video Sample:
+Video Samples:
 ```python
 RoboticArm(Parameters(graphic=True, population=4, segments=3, seed=123))
 ```
