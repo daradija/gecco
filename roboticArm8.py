@@ -421,7 +421,7 @@ if __name__ == '__main__':
 	# Generar todas las combinaciones de parámetros
 	parameter_combinations = list(itertools.product(populations, segments, seeds))
 
-	RoboticArm(Parameters(graphic=True, population=4, segments=3, seed=123))
+	RoboticArm(Parameters(graphic=True, population=10, segments=4, seed=123))
 
 	# Ejecutar en paralelo con todos los núcleos disponibles
 	results = []
