@@ -331,77 +331,78 @@ def save_results_to_file(results, filename="results.csv"):
 		writer.writerows(results)
 
 # Configuración para fuentes en PDF y PS
-# matplotlib.rcParams['pdf.fonttype'] = 42
-# matplotlib.rcParams['ps.fonttype'] = 42
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 def plot_results(filename="results.csv", metric="times"):
-    """
-    Plot results with the option to select the metric ("times" or "rounds").
-    """
-    if not os.path.exists(filename):
-        print(f"The file {filename} does not exist.")
-        return
+	"""
+	Plot results with the option to select the metric ("times" or "rounds").
+	"""
+	if not os.path.exists(filename):
+		print(f"The file {filename} does not exist.")
+		return
 
-    if metric not in ["times", "rounds"]:
-        print("Invalid metric. Use 'times' or 'rounds'.")
-        return
+	if metric not in ["times", "rounds"]:
+		print("Invalid metric. Use 'times' or 'rounds'.")
+		return
 
-    # Data organized by population and segments
-    data = defaultdict(lambda: defaultdict(list))
+	# Data organized by population and segments
+	data = defaultdict(lambda: defaultdict(list))
 
-    # Read the file
-    with open(filename, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            population = int(row["Population"]) - 1
-            segment = int(row["Segments"])
-            time = float(row["Time"]) / float(row["Population"])
-            rounds = float(row["Rounds"]) / 100
-            # Group by population and segment
-            data[segment][population].append((time, rounds))
+	# Read the file
+	with open(filename, mode='r') as file:
+		reader = csv.DictReader(file)
+		for row in reader:
+			population = int(row["Population"]) - 1
+			segment = int(row["Segments"])
+			time = float(row["Time"]) / float(row["Population"])
+			rounds = float(row["Rounds"]) / 100
+			# Group by population and segment
+			data[segment][population].append((time, rounds))
 
-    plt.figure(figsize=(12, 8))
+	plt.figure(figsize=(12, 8))
 
-    # Plot for each segment
-    for segment, segment_data in data.items():
-        populations = sorted(segment_data.keys())
-        means = []
-        stds = []
+	# Plot for each segment
+	for segment, segment_data in data.items():
+		populations = sorted(segment_data.keys())
+		means = []
+		stds = []
 
-        for population in populations:
-            # Extract data for all seeds for this segment and population
-            values = segment_data[population]
-            if metric == "times":
-                values_metric = [v[0] for v in values]
-            else:  # metric == "rounds"
-                values_metric = [v[1] for v in values]
+		for population in populations:
+			# Extract data for all seeds for this segment and population
+			values = segment_data[population]
+			if metric == "times":
+				values_metric = [v[0] for v in values]
+			else:  # metric == "rounds"
+				values_metric = [v[1] for v in values]
 
-            # Calculate mean and standard deviation
-            means.append(np.mean(values_metric))
-            stds.append(np.std(values_metric))
+			# Calculate mean and standard deviation
+			means.append(np.mean(values_metric))
+			stds.append(np.std(values_metric))
 
-        # Plot the selected metric (mean and interval)
-        plt.errorbar(
-            populations, means, yerr=stds, label=f"{segment}", marker='o'
-        )
+		# Plot the selected metric (mean and interval)
+		plt.errorbar(
+			populations, means, yerr=stds, label=f"{segment}", marker='o'
+		)
 
-    # Configure titles and labels based on the metric
-    if metric == "times":
-        plt.title("Average Time by Population and Segments")
-        plt.ylabel("Time (Average per Population)")
-    else:  # metric == "rounds"
-        plt.title("Average Rounds by Population and Segments")
-        plt.ylabel("Rounds (Average per Population)")
+	# Configure titles and labels based on the metric
+	if metric == "times":
+		#plt.title("Average Time by Population and Segments")
+		plt.ylabel("Time (Average per Population)")
+	else:  # metric == "rounds"
+		#plt.title("Average Rounds by Population and Segments")
+		plt.ylabel("Rounds (Average per Population)")
 
-    plt.xlabel("Population")
-    plt.legend(title="Segments")
-    plt.grid(True)
-    plt.show()
+	plt.xlabel("Population")
+	plt.xticks(populations)  # Ensure only integer values appear on the x-axis
+	plt.legend(title="Segments")
+	plt.grid(True)
+	plt.show()
 
 
 
 if __name__ == '__main__':
-	fileName="results2.csv"
+	fileName="results3.csv"
 	plot_results(filename=fileName, metric="times")
 	plot_results(filename=fileName, metric="rounds")
 
@@ -428,6 +429,9 @@ if __name__ == '__main__':
 	with ProcessPoolExecutor(max_workers=num_cpus) as executor:
 		results = list(executor.map(run_robotic_arm, parameter_combinations))
 
+
+	# Change the file name to no overwrite the previous results
+	fileName="results1.csv"
 	# Guardar resultados en un archivo CSV
 	save_results_to_file(results, filename=fileName)
 

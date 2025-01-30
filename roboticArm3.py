@@ -193,8 +193,8 @@ class Clock:
 					# text = font.render(str(round(angle.value(0),2)), True, c.color)
 					# screen.blit(text, middle)
 
-					derivate=angle.get(c.angle,0)*100
-					#derivate=angle.get(c.segment_length)*10000
+					#derivate=angle.get(c.angle,0)*5000
+					derivate=angle.get(c.segment_length,0)*5000
 					
 					# draw a ortogonal line from the middle with module derivate
 					# Calcula el vector ortogonal (derivada perpendicular)
