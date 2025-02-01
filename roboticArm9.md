@@ -266,6 +266,7 @@ $$
 P1 + t\,u = Q1 + s\,v.
 $$
 
+
      If \(0 \le t \le 1\) and \(0 \le s \le 1\), they intersect in that point within both segments.
    - If the lines are parallel, check if they’re **collinear**. If they aren’t collinear, there is **no intersection**.
    - If they’re **collinear**, reduce to a **1D overlap** check by projecting onto one of the direction vectors.
