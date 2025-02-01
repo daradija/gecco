@@ -402,7 +402,7 @@ def plot_results(filename="results.csv", metric="times"):
 
 
 if __name__ == '__main__':
-	fileName="results3.csv"
+	fileName="results1.csv"
 	plot_results(filename=fileName, metric="times")
 	plot_results(filename=fileName, metric="rounds")
 
@@ -430,8 +430,7 @@ if __name__ == '__main__':
 		results = list(executor.map(run_robotic_arm, parameter_combinations))
 
 
-	# Change the file name to no overwrite the previous results
-	fileName="results1.csv"
+	
 	# Guardar resultados en un archivo CSV
 	save_results_to_file(results, filename=fileName)
 
