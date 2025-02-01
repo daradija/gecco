@@ -1,5 +1,5 @@
 # Zorder
-The concept of z-ordering is highly efficient and saves considerable time. It is straightforward to implement and illustrates that the forward mode is superior to backpropagation when the operation graph changes for each frame. This is impractical for other methods due to the required "compilation" time.
+The concept of z-ordering is highly efficient and saves considerable time. It is straightforward to implement and demonstrates that the forward mode is superior to backpropagation when the operation graph changes for each frame. This is impractical for other methods due to the required "compilation" time.
 
 From a mathematical perspective, the task involves finding the intersection point between two segments. This intersection point exerts a force in the direction of the line of sight.
 
@@ -150,4 +150,24 @@ Since parallel processing is performed for all individuals in the population, ex
 
 These checks are necessary for cases where one of the endpoints lies on the segment. Can these cases be disregarded? The optimal approach to address this issue is to construct a graph.
 
-![Tipical Case](assets/tipical-case.png)
+![Typical Case](assets/typical-case.png)
+
+- In blue, the prototypical robotic arm.
+- In green, the model attempting to imitate the blue one.
+- In yellow, the projections to the focus.
+- In red, the force, as the intersection of the green and yellow lines.
+
+The example is not appropriate because the projection lines do not have to be aligned.
+
+![Typical Case 2](assets/typical-case2.png)
+
+The orange mark is the intersection point. As you can see, the yellow is a line, not a segment. You only need to be careful when two projection lines are aligned.
+
+One of the cases is impossible, the inferior in our example because the second segment is not connected to the origin or base. 
+
+![paral-case](assets/paral-case.png)
+
+They have been drawn slightly non-overlapping for clarity.
+In this case, two of the projections are the same. That's easy to detect because we have the same angle in two consecutive segments.
+
+Remember that we are applying the same algorithm to all models. If the difference is 0 between consecutive angles, we may have a value of 0 to multiply and cancel the correction.
