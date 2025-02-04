@@ -171,3 +171,16 @@ They have been drawn slightly non-overlapping for clarity.
 In this case, two of the projections are the same. That's easy to detect because we have the same angle in two consecutive segments.
 
 Remember that we are applying the same algorithm to all models. If the difference is 0 between consecutive angles, we may have a value of 0 to multiply and cancel the correction.
+
+At the beginning, we are satisfied with drawing only the red lines. Then we will apply the mathematics and finally the corrections. In reality, any segment can be hidden by any other segment.
+
+We need to measure the distances of the projections, as well as the intersections of other segments. Identify which is the minimum. And see if the minimum differs between the model and reality (blue). If the minimum does not match, we must apply a force between the minimum of the model and the intersection. The force can be in both directions, as if it were a rubber band pushing attractively.
+
+First, we program something iteratively and then we think about the data structure for the calculation.
+
+
+jefe de proyecto.
+Ineco.
+Ineco en Sevilla.
+danil@ineco.
+Jorge 914521200
