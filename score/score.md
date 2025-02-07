@@ -83,7 +83,7 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
 ![alt text](image-17.png)
 
 
-\[ (uv)' = u'v + uv' \]
+$$ (uv)' = u'v + uv' $$
 
 ```python
 self.g[dest, :,:] = (
@@ -92,7 +92,7 @@ self.g[dest, :,:] = (
 )
 ```
 
-\[ \left( \frac{u}{v} \right)' = \frac{u'v - uv'}{v^2} \]
+$$ \left( \frac{u}{v} \right)' = \frac{u'v - uv'}{v^2} $$
 
 ```python
 self.g[dest, :, :] = (
