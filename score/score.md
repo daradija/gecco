@@ -1,7 +1,7 @@
 # Eye-to-Hand Alignment in Articulated Robots viea Automatic Differentiation and Genetic Algorithms
-![alt text](intro.gif)
-
 ![alt text](image-16.png)
+
+![alt text](intro.gif)
 
 * David Ragel Díaz-Jara (dragel@us.es)
 * Daniel Cagigas Muñiz
