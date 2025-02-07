@@ -139,11 +139,10 @@ This goes against the philosophy of gradient correction, where the gradient itse
 
 ```python
 	def learn(self):
-		#ep=self.nn.value[self.id2]/len(self.nn.peso2id)
 		for peso,id in enumerate(self.nn.peso2id):
 			#cte=self.nn.g[self.id2,:,peso]
 			cte=self.nn.g[self.id2,:,peso]*np.abs(self.nn.value[id]) 		
-            
+
 			epsilon=self.nn.learning_rate[peso]
 			self.nn.value[id]-=epsilon*cte
 
