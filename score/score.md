@@ -115,6 +115,8 @@ In the end, we have projected on the tip how each angle affects the movement.
 
 To move from a movement problem to a camera calibration problem, you only need to calculate the slope and the angle.
 
+![alt text](image-18.png)
+
 ![alt text](image-9.png)
 
 ```python
