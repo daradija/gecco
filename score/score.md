@@ -8,10 +8,11 @@
 * Maria José Morón Fernandez
 * José Luis Guisado Lizar
 
-# Compare Deep Neural Network with Arm Neural with 
+# Compare Deep Neural Network with GAAD
+
+GAAD is use in a robotic Arm.
 
 Let's explain GAAD, which is an acronym we have invented for the combination of Genetic Algorithm with Automatic Differentiation.
-
 
 There is a robotic arm and a camera and a model that tries to converge.
 It is a calibration of the kinematics. Length and angle with a single eye.
@@ -42,21 +43,20 @@ Let's compare a deep neural network with a robotic arm.
 $$
 Parameters=Segments * 2
 $$
-where each segment has an angle and a segment length
+where each segment has an angle and a segment length.
 
 # Connected  Fully vs HTM 
 ![alt text](image-8.png)
-Homogeneous Transformation Matrix is a matrix used to perform translation and rotation operations in 3D space.
+Homogeneous Transformation Matrix is a matrix used to perform translation and rotation operations in 2D/3D space.
 
 # Explainability
 Combining autodifferentiation and HTM, the explainability of the neural system is absolute.
 
-Connection Hypothesis
+## Connection Hypothesis
 ![alt text](image-2.png)
 * Everything that has a model, has mathematical operations can be connected with gradients.
 * The information is the gradient.
 * All information propagation, if connected from start to finish, a learning process is allowed.
-
 
 # Mode
 ## Backpropagation on DDN
@@ -68,14 +68,29 @@ Connection Hypothesis
 ![alt text](image-13.png)
 
 * The opposite method to backpropagation.
-* Number of operations: 13
+* Number of operations: 13.
 * Backpropagation is more efficient but requires two passes.
+
 * The easiest way to program:
     - The derivatives correspond to high school concepts.
     - By overloading Python operators.
     - And using numpy.
 * Parallels: Hardware solution.
 
+![alt text](image-17.png)
+
+```python
+self.g[dest, :,:] = (
+    self.g[src1, :,:] * self.value[src2, :,np.newaxis] +
+    self.g[src2, :,:] * self.value[src1, :,np.newaxis]
+)
+
+self.g[dest, :, :] = (
+    self.g[src1, :, :] / self.value[src2, :, np.newaxis] -
+    (self.value[src1, :, np.newaxis] * self.g[src2, :, :]) /
+    (self.value[src2, :, np.newaxis] ** 2)
+)
+```
 
 ![alt text](image-11.png)
 
