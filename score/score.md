@@ -1,5 +1,5 @@
 # Eye-to-Hand Alignment in Articulated Robots viea Automatic Differentiation and Genetic Algorithms
-![alt text](Gifable-2025-01-16T07:46:39.gif)
+![alt text](intro.gif)
 
 ![alt text](image-16.png)
 
@@ -87,7 +87,7 @@ First, you train the model, and then you perform inference.
 The movement problem does not require learning.
 Just project the derivatives onto the hand and perform the dot product.
 
-![alt text](Gifable-2025-02-06T08:53:45.gif)
+![alt text](move.gif)
 
 In the end, we have projected on the tip how each angle affects the movement.
 
