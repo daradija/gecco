@@ -12,10 +12,8 @@
 
 Genetic Algorithm with Automatic Differentiation.
 
-GAAD is use in a robotic Arm.
-
 There is a robotic arm and a camera and a model that tries to converge.
-It is a calibration of the kinematics. Length and angle with a single eye.
+It is a calibration of the kinematics. Length and angle of the segments with a single eye.
 
 Let's compare a deep neural network with a robotic arm.
 
