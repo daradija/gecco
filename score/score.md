@@ -46,7 +46,9 @@ Parameters = Segments * 2
 where each segment has an angle and a segment length.
 
 # Connected  Fully vs HTM 
+
 ![alt text](image-8.png)
+
 Homogeneous Transformation Matrix is a matrix used to perform translation and rotation operations in 2D/3D space.
 
 # Explainability
@@ -59,8 +61,9 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
 * All information propagation, if connected from start to finish, a learning process is allowed.
 
 # Mode
-## Backpropagation on DDN
+## Backpropagation on DNN
 ![alt text](image-5.png)
+* Two-pass process.
 * Need to store the operation graph
 * Number operations 7.
 
@@ -71,7 +74,7 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
 * Number of operations: 13.
 * Backpropagation is more efficient but requires two passes.
 
-* The easiest way to program:
+* FM is the easiest way to program:
     - The derivatives correspond to high school concepts.
     - And using numpy.
     - By overloading Python operators.
@@ -79,12 +82,27 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
 
 ![alt text](image-17.png)
 
+
+\[ (uv)' = u'v + uv' \]
+
 ```python
 self.g[dest, :,:] = (
     self.g[src1, :,:] * self.value[src2, :,np.newaxis] +
     self.g[src2, :,:] * self.value[src1, :,np.newaxis]
 )
+```
 
+\[ \left( \frac{u}{v} \right)' = \frac{u'v - uv'}{v^2} \]
+
+```python
+self.g[dest, :, :] = (
+    self.g[src1, :, :] / self.value[src2, :, np.newaxis] -
+    (self.value[src1, :, np.newaxis] * self.g[src2, :, :]) /
+    (self.value[src2, :, np.newaxis] ** 2)
+)
+```
+
+```python
 self.g[dest, :, :] = (
     self.g[src1, :, :] / self.value[src2, :, np.newaxis] -
     (self.value[src1, :, np.newaxis] * self.g[src2, :, :]) /
