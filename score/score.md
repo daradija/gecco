@@ -127,8 +127,8 @@ angle=m.atan()
 Using the same mathematics, it consists of two operations.
 
 # Learning rate percentaje
-How to apply the gradient
-The mystery. Notice how the gradients are.
+How to sum the gradient to de parameter.
+The mystery. Notice how the gradients are of a different order of magnitude if they come from the angle or the length.
 If we have the correction, we would never extend the segments.
 
 ![alt text](image-10.png)
