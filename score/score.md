@@ -119,18 +119,19 @@ To move from a movement problem to a camera calibration problem, you only need t
 
 ![alt text](image-9.png)
 
+```python
+m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
+angle=m.atan()	
+```
+
 Using the same mathematics, it consists of two operations.
 
 # Learning rate percentaje
 How to apply the gradient
 The mystery. Notice how the gradients are.
 If we have the correction, we would never extend the segments.
-![alt text](image-10.png)
 
-```python
-m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
-angle=m.atan()	
-```
+![alt text](image-10.png)
 
 The angular derivative is larger than the length derivative of the segments. This is because one is in pixels and the other is in radians.
 This forces us to apply an angular correction smaller than the length correction.
@@ -140,13 +141,9 @@ This goes against the philosophy of gradient correction, where the gradient itse
 	def learn(self):
 		#ep=self.nn.value[self.id2]/len(self.nn.peso2id)
 		for peso,id in enumerate(self.nn.peso2id):
-			#cte=self.nn.sign(self.nn.g[self.id2,:,peso])*np.abs(self.nn.value[id]) 
-			cte=self.nn.g[self.id2,:,peso]*np.abs(self.nn.value[id]) 
-			# _var pob _gra * _var pob		
-			if cte[0]!=0:
-				print(self.nn.g[self.id2,0,peso])
-				print(self.nn.value[id,0])
-				print("cte",cte)
+			#cte=self.nn.g[self.id2,:,peso]
+			cte=self.nn.g[self.id2,:,peso]*np.abs(self.nn.value[id]) 		
+            
 			epsilon=self.nn.learning_rate[peso]
 			self.nn.value[id]-=epsilon*cte
 
