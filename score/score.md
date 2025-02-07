@@ -190,5 +190,5 @@ Comparison table:
 # Future Work
 
 - We plan to extend the model to trajectory 
-- 2D 3D 
+- Three Dimensional space.
 - Mobile Obstacles
