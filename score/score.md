@@ -80,9 +80,6 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
     - By overloading Python operators.
 * Parallels: Hardware solution.
 
-![alt text](image-17.png)
-
-
 $$ (uv)' = u'v + uv' $$
 
 ```python
@@ -102,17 +99,11 @@ self.g[dest, :, :] = (
 )
 ```
 
-```python
-self.g[dest, :, :] = (
-    self.g[src1, :, :] / self.value[src2, :, np.newaxis] -
-    (self.value[src1, :, np.newaxis] * self.g[src2, :, :]) /
-    (self.value[src2, :, np.newaxis] ** 2)
-)
-```
-
 ![alt text](image-11.png)
 
-# Online 
+Autodifferentiation is syntactic sugar. Performing high-level operations.
+
+# Online / Real Time Learning
 ## DNN No
 First, you train the model, and then you perform inference.
 
@@ -135,6 +126,11 @@ How to apply the gradient
 The mystery. Notice how the gradients are.
 If we have the correction, we would never extend the segments.
 ![alt text](image-10.png)
+
+```python
+m=(c.y-focus_cam[1])/(c.x-focus_cam[0])
+angle=m.atan()	
+```
 
 The angular derivative is larger than the length derivative of the segments. This is because one is in pixels and the other is in radians.
 This forces us to apply an angular correction smaller than the length correction.
