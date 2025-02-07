@@ -1,88 +1,169 @@
-# Who am I
-* I am David Ragel. dragel@us.es
-* I am a PhD student. 
-* I have always try to collaborate but it is difficult.
-
-# Compare Deep Neural Network with Arm Neural with 
-![alt text](image-14.png)
+# Eye-to-Hand Alignment in Articulated Robots viea Automatic Differentiation and Genetic Algorithms
 ![alt text](Gifable-2025-01-16T07:46:39.gif)
 
-# Deep Neural Network
+![alt text](image-16.png)
+
+* David Ragel Díaz-Jara (dragel@us.es)
+* Daniel Cagigas Muñiz
+* Maria José Morón Fernandez
+* José Luis Guisado Lizar
+
+# Compare Deep Neural Network with Arm Neural with 
+
+Let's explain GAAD, which is an acronym we have invented for the combination of Genetic Algorithm with Automatic Differentiation.
+
+
+There is a robotic arm and a camera and a model that tries to converge.
+It is a calibration of the kinematics. Length and angle with a single eye.
+
+Let's compare a deep neural network with a robotic arm.
+
+# Index / Comparison table:
+
+|| DNN | GAAD / Arm |
+| ---| --- | --- |
+| Parameters | A lot | Few |
+| Connected | Fully | HTM |
+| Explainability | No | Yes |
+| Mode | Backpropagation | Forward |
+| Online | No | Yes |
+| SGD |Learning rate| Learning rate percentaje|
+| Hyperparameter | Learning rate | Genetic population |
+| Deploy on device | No | Yes |
+
+# Parameters
+## Deep Neural Network a lot
 ![alt text](image-1.png)
 * A neural network receives an input \( x \) and generates an output \( y \). 
 * The weights are a tensor, a list of matrices that perform matrix multiplication for each layer, followed by an activation layer.
 * I am simplifying by omitting the biases.
 
-# Backpropagation and Learning
-![alt text](image-5.png)
-* Need to store the operation graph
-* Number operations 7.
+## Arm
+$$
+Parameters=Segments * 2
+$$
+where each segment has an angle and a segment length
 
-
-# Forward Mode
-![alt text](image-13.png)
-
-* The oposited method to backpropation.
-* Number operations 13
-* Backpropagation is more efficient but requires two passes.
-* The easiest way to program. 
-    - The derivatives correspond to the high school concept.
-    - by overloading Python operators.
-    - And using numpy.
-* Parallels. Hardware solution.
-
-![alt text](image-11.png)
-
-# The movement problem.
-![alt text](Gifable-2025-02-06T08:53:45.gif)
-    In the end, we have projected on the tip how each angle affects the movement.
-
-# This work helps to understand the transformer
-    a projection is made at the output
-    And the queries are the route calculations
-    there is an exploration.
+# Connected  Fully vs HTM 
 ![alt text](image-8.png)
+Homogeneous Transformation Matrix is a matrix used to perform translation and rotation operations in 3D space.
 
-# The visual problem
-![alt text](image-9.png)
+# Explainability
+Combining autodifferentiation and HTM, the explainability of the neural system is absolute.
 
-    Using the same mathematics, it consists of two operations.
-# How to apply the gradient
-
-    The mystery. Notice how the gradients are.
-    If we have the correction, we would never extend the segments.
-![alt text](image-10.png)
-
-
-# Genetics
-    Genetics adjusts the learning rate.
-# Gecco Results
-    It is necessary.
-    It scales.
-
-![alt text](image-12.png)
-
-# Dynamic pruning
-    The data structure.
-    If we limit the propagated gradients.
-    There are positive results.
-Future papers?
-I don't know if I should include the vehicles?
-# Reinforcement learning
-    Two neural networks.
-    Not directly connected.
-# Chess.
-    AlphaZero.
-    But it has structure, trick.
-# Learning "rules" no.
-    Learning the structure. Put black box.
-    ID3 / Convolution
-    Pseudogradients with typing
-    Data collection
-# githubs 
-
-# Connection Hypothesis
+Connection Hypothesis
 ![alt text](image-2.png)
 * Everything that has a model, has mathematical operations can be connected with gradients.
 * The information is the gradient.
 * All information propagation, if connected from start to finish, a learning process is allowed.
+
+
+# Mode
+## Backpropagation on DDN
+![alt text](image-5.png)
+* Need to store the operation graph
+* Number operations 7.
+
+## Forward Mode
+![alt text](image-13.png)
+
+* The opposite method to backpropagation.
+* Number of operations: 13
+* Backpropagation is more efficient but requires two passes.
+* The easiest way to program:
+    - The derivatives correspond to high school concepts.
+    - By overloading Python operators.
+    - And using numpy.
+* Parallels: Hardware solution.
+
+
+![alt text](image-11.png)
+
+# Online 
+## DNN No
+First, you train the model, and then you perform inference.
+
+## Arm Yes
+The movement problem does not require learning.
+Just project the derivatives onto the hand and perform the dot product.
+
+![alt text](Gifable-2025-02-06T08:53:45.gif)
+
+In the end, we have projected on the tip how each angle affects the movement.
+
+To move from a movement problem to a camera calibration problem, you only need to calculate the slope and the angle.
+
+![alt text](image-9.png)
+
+Using the same mathematics, it consists of two operations.
+
+# Learning rate percentaje
+How to apply the gradient
+The mystery. Notice how the gradients are.
+If we have the correction, we would never extend the segments.
+![alt text](image-10.png)
+
+The angular derivative is larger than the length derivative of the segments. This is because one is in pixels and the other is in radians.
+This forces us to apply an angular correction smaller than the length correction.
+This goes against the philosophy of gradient correction, where the gradient itself is multiplied by the learning rate. Here, the learning rate is proportional.
+
+```python
+	def learn(self):
+		#ep=self.nn.value[self.id2]/len(self.nn.peso2id)
+		for peso,id in enumerate(self.nn.peso2id):
+			#cte=self.nn.sign(self.nn.g[self.id2,:,peso])*np.abs(self.nn.value[id]) 
+			cte=self.nn.g[self.id2,:,peso]*np.abs(self.nn.value[id]) 
+			# _var pob _gra * _var pob		
+			if cte[0]!=0:
+				print(self.nn.g[self.id2,0,peso])
+				print(self.nn.value[id,0])
+				print("cte",cte)
+			epsilon=self.nn.learning_rate[peso]
+			self.nn.value[id]-=epsilon*cte
+
+			self.nn.value[id] = np.where(
+				self.nn.valueFrom[id] != self.nn.valueTo[id],
+				np.clip(self.nn.value[id], self.nn.valueFrom[id], self.nn.valueTo[id]),
+				self.nn.value[id]
+			)
+```
+
+
+
+# Genetic Algorithm
+
+![alt](../assets/sample1.gif)
+
+This is a population. The blue one is the reference. The red one is going to die.
+
+![alt](../assets/sample2.gif)
+With more segments and a larger population
+DNN has the learning rate as a hyperparameter.
+In GAAD, we have the size of the population as a hyperparameter.
+
+# Gecco Results
+
+![alt text](image-12.png)
+
+The ideal population is three.
+Pay attention, with 6 variables and a population of three, we get 6*3=18 parameters to work with.
+GAAD is therefore deployable on a small device.
+
+
+Comparison table:
+|| DNN | GAAD / Arm |
+| ---| --- | --- |
+| Parameters | A lot | Few |
+| Connected | Fully | HTM |
+| Explainability | No | Yes |
+| Mode | Backpropagation | Forward |
+| Online | No | Yes |
+| SGD |Learning rate| Learning rate percentaje|
+| Hyperparameter | Learning rate | Genetic population |
+| Deploy on device | No | Yes |
+
+# Future Work
+
+- We plan to extend the model to trajectory 
+- 2D 3D 
+- Mobile Obstacles
