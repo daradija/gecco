@@ -10,9 +10,9 @@
 
 # Compare Deep Neural Network with GAAD
 
-GAAD is use in a robotic Arm.
+Genetic Algorithm with Automatic Differentiation.
 
-Let's explain GAAD, which is an acronym we have invented for the combination of Genetic Algorithm with Automatic Differentiation.
+GAAD is use in a robotic Arm.
 
 There is a robotic arm and a camera and a model that tries to converge.
 It is a calibration of the kinematics. Length and angle with a single eye.
@@ -40,9 +40,9 @@ Let's compare a deep neural network with a robotic arm.
 * I am simplifying by omitting the biases.
 
 ## Arm
-$$
-Parameters=Segments * 2
-$$
+
+Parameters = Segments * 2
+
 where each segment has an angle and a segment length.
 
 # Connected  Fully vs HTM 
@@ -73,8 +73,8 @@ Combining autodifferentiation and HTM, the explainability of the neural system i
 
 * The easiest way to program:
     - The derivatives correspond to high school concepts.
-    - By overloading Python operators.
     - And using numpy.
+    - By overloading Python operators.
 * Parallels: Hardware solution.
 
 ![alt text](image-17.png)
