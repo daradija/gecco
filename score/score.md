@@ -50,7 +50,7 @@ where each segment has an angle and a segment length.
 Homogeneous Transformation Matrix is a matrix used to perform translation and rotation operations in 2D/3D space.
 
 # Explainability
-Combining autodifferentiation and HTM, the explainability of the neural system is absolute.
+Combining autodifferentiation and HTM, the explainability of GAAD is absolute.
 
 ## Connection Hypothesis
 ![alt text](image-2.png)
@@ -105,7 +105,7 @@ Autodifferentiation is syntactic sugar. Performing high-level operations.
 ## DNN No
 First, you train the model, and then you perform inference.
 
-## Arm Yes
+## GAAD Yes
 The movement problem does not require learning.
 Just project the derivatives onto the hand and perform the dot product.
 
